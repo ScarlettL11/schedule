@@ -2391,7 +2391,7 @@ window.SEED_DATA = {
     }
     if (serverMode) {
       clearTimeout(serverSaveTimer);
-      serverSaveTimer = setTimeout(supabaseClient ? saveToSupabase : postStateToServer, 250);
+      serverSaveTimer = setTimeout((SUPABASE_URL && SUPABASE_KEY) ? saveToSupabase : postStateToServer, 250);
     }
   }
 
@@ -3700,6 +3700,23 @@ window.SEED_DATA = {
     if (window.lucide) window.lucide.createIcons(modal);
   }
 
+  function syncDraftFromModal() {
+    if (!draftSession) return;
+    draftSession.date = $("#sesDate")?.value || draftSession.date;
+    const start = $("#sesTimeStart")?.value || "14:00";
+    const end = $("#sesTimeEnd")?.value || "14:40";
+    draftSession.time = `${start}-${end}`;
+    draftSession.mode = $("#sesMode")?.value || draftSession.mode;
+    draftSession.candidates = $("#sesCandidates")?.value || "";
+    draftSession.status = $("#sesStatus")?.value || draftSession.status;
+    draftSession.hostId = $("#sesHost")?.value || null;
+    draftSession.notified = $("#sesNotified")?.checked === true;
+    draftSession.formConfirmed = $("#sesFormConfirmed")?.checked === true;
+    draftSession.ticketReady = $("#sesTicketReady")?.checked === true;
+    draftSession.locked = $("#sesLocked")?.checked === true;
+    draftSession.note = $("#sesNote")?.value || "";
+  }
+
   function saveSessionFromModal() {
     const isNew = selectedSessionId === "new";
     const session = isNew ? draftSession : state.sessions.find((s) => s.id === selectedSessionId);
@@ -4399,6 +4416,7 @@ window.SEED_DATA = {
     if (action === "add-session") { addSession(); return; }
     if (action === "edit-session") { openSessionModal(id); return; }
     if (action === "copy-notice") {
+      if (id === "new") syncDraftFromModal();
       const session = id === "new" ? draftSession : state.sessions.find((s) => s.id === id);
       if (session) {
         if (id !== "new") {
@@ -4413,6 +4431,7 @@ window.SEED_DATA = {
     if (action === "fill-session") {
       if (id === "new") {
         if (!draftSession) return;
+        syncDraftFromModal();
         const cursorBackup = deepClone(state.cursors);
         state.sessions.push(draftSession);
         const result = fillSession(draftSession);
@@ -4443,6 +4462,7 @@ window.SEED_DATA = {
     if (action === "save-session") { saveSessionFromModal(); return; }
     if (action === "delete-session") { deleteSession(id); return; }
     if (action === "add-slot") {
+      if (selectedSessionId === "new") syncDraftFromModal();
       const session = selectedSessionId === "new" ? draftSession : state.sessions.find((s) => s.id === selectedSessionId);
       if (!session) return;
       const slots = session.interviewers || [];

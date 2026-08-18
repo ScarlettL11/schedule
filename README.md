@@ -30,7 +30,7 @@ node server.js
 所有人打开同一个带后端地址的链接：
 
 ```text
-https://szekalin-1114.github.io/schedule/面试官轮值排班台.html?api=https://你的后端地址
+https://ScarlettL11.github.io/schedule/
 ```
 
 页面每 4 秒自动同步一次服务器数据，数据保存在 `server/data/state.json`。

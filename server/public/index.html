@@ -770,7 +770,6 @@ table.grid-table {
 </style>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.469.0/dist/umd/lucide.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     window.SUPABASE_URL = "https://vkzvxpdddmtrtqpiddug.supabase.co";
     window.SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrenZ4cGRkZG10cnRxcGlkZHVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwNTEzMTYsImV4cCI6MjEwMjYyNzMxNn0.4TDjzYw3yL2yIAKWbpkBWGgCHqiNxlnCKQKRFH8dNQ4";
@@ -2397,12 +2396,17 @@ window.SEED_DATA = {
   }
 
   async function saveToSupabase() {
-    if (!supabaseClient) return;
+    if (!SUPABASE_URL || !SUPABASE_KEY) return;
     try {
-      await supabaseClient.from("state").upsert({
-        id: 1,
-        data: state,
-        updated_at: new Date().toISOString(),
+      await fetch(`${SUPABASE_URL}/rest/v1/state?on_conflict=id`, {
+        method: "POST",
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          "Content-Type": "application/json",
+          Prefer: "resolution=merge-duplicates,return=minimal",
+        },
+        body: JSON.stringify({ id: 1, data: state, updated_at: new Date().toISOString() }),
       });
     } catch (err) {
       console.warn("Supabase 保存失败", err);
@@ -4564,7 +4568,7 @@ window.SEED_DATA = {
   });
 
   async function initServerMode() {
-    if (window.supabase && SUPABASE_URL && SUPABASE_KEY) {
+    if (SUPABASE_URL && SUPABASE_KEY) {
       await initSupabaseMode();
       return;
     }
@@ -4597,11 +4601,16 @@ window.SEED_DATA = {
 
   async function initSupabaseMode() {
     try {
-      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      const { data, error } = await supabaseClient.from("state").select("data").eq("id", 1).maybeSingle();
-      if (error) throw error;
-      if (data && data.data && data.data.departments && data.data.sessions) {
-        state = normalizeState(data.data);
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/state?select=data&id=eq.1`, {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+        },
+      });
+      if (!res.ok) throw new Error("state fetch failed");
+      const rows = await res.json();
+      if (rows.length && rows[0].data && rows[0].data.departments && rows[0].data.sessions) {
+        state = normalizeState(rows[0].data);
       }
       serverMode = true;
       markPassedSessions();
@@ -4612,16 +4621,7 @@ window.SEED_DATA = {
         el.textContent = "服务器同步中";
         el.style.color = "var(--green)";
       }
-      supabaseChannel = supabaseClient.channel("schedule-sync")
-        .on("postgres_changes", { event: "*", schema: "public", table: "state" }, (payload) => {
-          const remote = payload.new && payload.new.data;
-          if (remote && remote.departments && remote.sessions && JSON.stringify(remote) !== JSON.stringify(state)) {
-            state = normalizeState(remote);
-            markPassedSessions();
-            renderCurrentView();
-          }
-        })
-        .subscribe();
+      setInterval(pollSupabaseState, 4000);
     } catch (err) {
       console.warn("Supabase 连接失败，使用本地模式", err);
       const el = document.getElementById("serverStatus");
@@ -4632,8 +4632,31 @@ window.SEED_DATA = {
     }
   }
 
+  async function pollSupabaseState() {
+    if (!serverMode || !SUPABASE_URL || !SUPABASE_KEY) return;
+    if (document.getElementById("modalRoot").innerHTML) return;
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/state?select=data&id=eq.1`, {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+        },
+      });
+      if (!res.ok) return;
+      const rows = await res.json();
+      const remote = rows[0] && rows[0].data;
+      if (remote && remote.departments && remote.sessions && JSON.stringify(remote) !== JSON.stringify(state)) {
+        state = normalizeState(remote);
+        markPassedSessions();
+        renderCurrentView();
+      }
+    } catch (err) {
+      console.warn("Supabase 同步失败", err);
+    }
+  }
+
   async function pollServerState() {
-    if (!serverMode || supabaseClient) return;
+    if (!serverMode || (SUPABASE_URL && SUPABASE_KEY)) return;
     if (document.getElementById("modalRoot").innerHTML) return;
     try {
       const res = await fetch(`${API_BASE}/api/state`);

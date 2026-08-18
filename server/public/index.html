@@ -770,6 +770,7 @@ table.grid-table {
 </style>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.469.0/dist/umd/lucide.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <header class="topbar">
@@ -1651,6 +1652,8 @@ window.SEED_DATA = {
 
   const STORAGE_KEY = "interviewer-scheduler-state-v4";
   const API_BASE = (new URLSearchParams(location.search).get("api") || window.SCHEDULER_API_BASE || "").replace(/\/$/, "");
+  const SUPABASE_URL = new URLSearchParams(location.search).get("supabaseUrl") || window.SUPABASE_URL || "";
+  const SUPABASE_KEY = new URLSearchParams(location.search).get("supabaseKey") || window.SUPABASE_KEY || "";
   let state = null;
   let currentView = "dashboard";
   let openDeptIds = new Set();
@@ -1666,6 +1669,8 @@ window.SEED_DATA = {
   let recordsFilter = "all";
   let serverMode = false;
   let serverSaveTimer = null;
+  let supabaseClient = null;
+  let supabaseChannel = null;
 
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -2383,7 +2388,20 @@ window.SEED_DATA = {
     }
     if (serverMode) {
       clearTimeout(serverSaveTimer);
-      serverSaveTimer = setTimeout(postStateToServer, 250);
+      serverSaveTimer = setTimeout(supabaseClient ? saveToSupabase : postStateToServer, 250);
+    }
+  }
+
+  async function saveToSupabase() {
+    if (!supabaseClient) return;
+    try {
+      await supabaseClient.from("state").upsert({
+        id: 1,
+        data: state,
+        updated_at: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.warn("Supabase 保存失败", err);
     }
   }
 
@@ -4542,6 +4560,10 @@ window.SEED_DATA = {
   });
 
   async function initServerMode() {
+    if (window.supabase && SUPABASE_URL && SUPABASE_KEY) {
+      await initSupabaseMode();
+      return;
+    }
     try {
       const res = await fetch(`${API_BASE}/api/state`);
       if (!res.ok) return;
@@ -4569,8 +4591,45 @@ window.SEED_DATA = {
     }
   }
 
+  async function initSupabaseMode() {
+    try {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      const { data, error } = await supabaseClient.from("state").select("data").eq("id", 1).maybeSingle();
+      if (error) throw error;
+      if (data && data.data && data.data.departments && data.data.sessions) {
+        state = normalizeState(data.data);
+      }
+      serverMode = true;
+      markPassedSessions();
+      saveState();
+      renderCurrentView();
+      const el = document.getElementById("serverStatus");
+      if (el) {
+        el.textContent = "服务器同步中";
+        el.style.color = "var(--green)";
+      }
+      supabaseChannel = supabaseClient.channel("schedule-sync")
+        .on("postgres_changes", { event: "*", schema: "public", table: "state" }, (payload) => {
+          const remote = payload.new && payload.new.data;
+          if (remote && remote.departments && remote.sessions && JSON.stringify(remote) !== JSON.stringify(state)) {
+            state = normalizeState(remote);
+            markPassedSessions();
+            renderCurrentView();
+          }
+        })
+        .subscribe();
+    } catch (err) {
+      console.warn("Supabase 连接失败，使用本地模式", err);
+      const el = document.getElementById("serverStatus");
+      if (el) {
+        el.textContent = "本地模式";
+        el.style.color = "var(--muted)";
+      }
+    }
+  }
+
   async function pollServerState() {
-    if (!serverMode) return;
+    if (!serverMode || supabaseClient) return;
     if (document.getElementById("modalRoot").innerHTML) return;
     try {
       const res = await fetch(`${API_BASE}/api/state`);

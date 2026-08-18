@@ -1650,6 +1650,7 @@ window.SEED_DATA = {
   "use strict";
 
   const STORAGE_KEY = "interviewer-scheduler-state-v4";
+  const API_BASE = (new URLSearchParams(location.search).get("api") || window.SCHEDULER_API_BASE || "").replace(/\/$/, "");
   let state = null;
   let currentView = "dashboard";
   let openDeptIds = new Set();
@@ -2388,7 +2389,7 @@ window.SEED_DATA = {
 
   async function postStateToServer() {
     try {
-      await fetch("/api/state", {
+      await fetch(`${API_BASE}/api/state`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(state),
@@ -4542,7 +4543,7 @@ window.SEED_DATA = {
 
   async function initServerMode() {
     try {
-      const res = await fetch("/api/state");
+      const res = await fetch(`${API_BASE}/api/state`);
       if (!res.ok) return;
       const data = await res.json();
       if (data && data.departments && data.sessions) {
@@ -4572,7 +4573,7 @@ window.SEED_DATA = {
     if (!serverMode) return;
     if (document.getElementById("modalRoot").innerHTML) return;
     try {
-      const res = await fetch("/api/state");
+      const res = await fetch(`${API_BASE}/api/state`);
       if (!res.ok) return;
       const data = await res.json();
       if (data && data.departments && data.sessions) {

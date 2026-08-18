@@ -1,11 +1,523 @@
 {
-  "version": 1,
   "meta": {
     "title": "外聘区域总监面试官轮值排班",
     "source": "外聘区域总监面试官轮班表（竞聘）.xlsx",
     "generatedAt": "2026-08-17T22:44:57",
-    "serverMode": true
+    "serverUpdatedAt": "2026-08-18T14:22:06.646Z"
   },
+  "hosts": [
+    {
+      "id": "host_sj",
+      "name": "连思嘉",
+      "note": "主持人",
+      "enabled": true,
+      "unavailable": [],
+      "maxConsecutive": 1
+    },
+    {
+      "id": "host_pp",
+      "name": "彭魁博",
+      "note": "主持人",
+      "enabled": true,
+      "unavailable": [],
+      "maxConsecutive": 1
+    },
+    {
+      "id": "host_yh",
+      "name": "和雨涵",
+      "note": "主持人",
+      "enabled": true,
+      "unavailable": [],
+      "maxConsecutive": 1
+    },
+    {
+      "id": "host_jj",
+      "name": "陆俊杰",
+      "note": "主持人",
+      "enabled": true,
+      "unavailable": [],
+      "maxConsecutive": 1
+    },
+    {
+      "id": "host_sm",
+      "name": "刘思铭",
+      "note": "主持人",
+      "enabled": true,
+      "unavailable": [],
+      "maxConsecutive": 1
+    }
+  ],
+  "cursors": {
+    "deptIndex": 1,
+    "headIndex": 4,
+    "assistantIndex": 11,
+    "deptPassCounts": {
+      "fawu": 3,
+      "yewu": 7,
+      "jicai": 9,
+      "renfa": 7,
+      "renzi": 8,
+      "pinpai": 5,
+      "zichan": 6,
+      "pinkong": 3,
+      "zongban": 7,
+      "shunlian": 6,
+      "gaojixiao": 3
+    },
+    "hostIndex": 4,
+    "organizerIndex": 0
+  },
+  "version": 1,
+  "sessions": [
+    {
+      "id": "hist_001",
+      "date": "2026-01-20",
+      "mode": "腾讯会议",
+      "note": "",
+      "time": "14:00-15:00",
+      "hostId": null,
+      "locked": false,
+      "status": "已开展",
+      "hostName": "美娜",
+      "notified": true,
+      "candidates": "李功镇大区外聘区域总监【周丘岳】",
+      "organizerId": null,
+      "ticketReady": true,
+      "interviewers": [
+        {
+          "slot": 0,
+          "deptId": "jicai",
+          "locked": true,
+          "personId": "jicai_李小君"
+        },
+        {
+          "slot": 1,
+          "deptId": "zongban",
+          "locked": true,
+          "personId": "zongban_郑雁璇"
+        },
+        {
+          "slot": 2,
+          "deptId": "renfa",
+          "locked": true,
+          "personId": "renfa_冯文玲"
+        },
+        {
+          "slot": 3,
+          "deptId": "pinpai",
+          "locked": true,
+          "personId": "pinpai_陈金月"
+        },
+        {
+          "slot": 4,
+          "deptId": "renzi",
+          "locked": true,
+          "personId": "renzi_廖思琪"
+        }
+      ],
+      "formConfirmed": true
+    },
+    {
+      "id": "hist_002",
+      "date": "2026-02-26",
+      "mode": "1501会议室",
+      "note": "",
+      "time": "14:00-15:00",
+      "hostId": null,
+      "locked": false,
+      "status": "已开展",
+      "hostName": "刘思铭",
+      "notified": true,
+      "candidates": "孟凡振大区外聘区域总监【陈业锋】",
+      "organizerId": null,
+      "ticketReady": true,
+      "interviewers": [
+        {
+          "slot": 0,
+          "deptId": "gaojixiao",
+          "locked": true,
+          "personId": "gaojixiao_禹巍巍"
+        },
+        {
+          "slot": 1,
+          "deptId": "pinkong",
+          "locked": true,
+          "personId": "pinkong_王祝青"
+        },
+        {
+          "slot": 2,
+          "deptId": "fawu",
+          "locked": true,
+          "personId": "fawu_万恩芹"
+        },
+        {
+          "slot": 3,
+          "deptId": "jicai",
+          "locked": true,
+          "personId": "jicai_张丽华"
+        },
+        {
+          "slot": 4,
+          "deptId": "yewu",
+          "locked": true,
+          "personId": "yewu_胡雪琴"
+        }
+      ],
+      "formConfirmed": true
+    },
+    {
+      "id": "hist_003",
+      "date": "2026-03-17",
+      "mode": "1501会议室",
+      "note": "",
+      "time": "14:00-15:00",
+      "hostId": null,
+      "locked": false,
+      "status": "已开展",
+      "hostName": "和雨涵",
+      "notified": true,
+      "candidates": "贺玲大区外聘区域总监【张奕萱】",
+      "organizerId": null,
+      "ticketReady": true,
+      "interviewers": [
+        {
+          "slot": 0,
+          "deptId": "renzi",
+          "locked": true,
+          "personId": "renzi_廖思琪"
+        },
+        {
+          "slot": 1,
+          "deptId": "zichan",
+          "locked": true,
+          "personId": "zichan_童忠庆"
+        },
+        {
+          "slot": 2,
+          "deptId": "pinpai",
+          "locked": true,
+          "personId": "pinpai_唐俪瑕"
+        },
+        {
+          "slot": 3,
+          "deptId": "shunlian",
+          "locked": true,
+          "personId": "shunlian_甘虹"
+        },
+        {
+          "slot": 4,
+          "deptId": "zongban",
+          "locked": true,
+          "personId": "zongban_郑雁璇"
+        }
+      ],
+      "formConfirmed": true
+    },
+    {
+      "id": "hist_004",
+      "date": "2026-04-09",
+      "mode": "1501会议室",
+      "note": "因资产、品控、顺联、法务、品牌两轮排一次，故本次人资连续两次（结合本次负责人少），下场不排",
+      "time": "14:00-15:00",
+      "hostId": null,
+      "locked": false,
+      "status": "已开展",
+      "hostName": "美娜",
+      "notified": true,
+      "candidates": "李莉大区外聘区域总监【陈子千】",
+      "organizerId": null,
+      "ticketReady": true,
+      "interviewers": [
+        {
+          "slot": 0,
+          "deptId": "pinkong",
+          "locked": true,
+          "personId": "pinkong_王祝青"
+        },
+        {
+          "slot": 1,
+          "deptId": "renfa",
+          "locked": true,
+          "personId": "renfa_杨敏"
+        },
+        {
+          "slot": 2,
+          "deptId": "renzi",
+          "locked": true,
+          "personId": "renzi_杨彦"
+        },
+        {
+          "slot": 3,
+          "deptId": "jicai",
+          "locked": true,
+          "personId": "jicai_张丽华"
+        },
+        {
+          "slot": 4,
+          "deptId": "yewu",
+          "locked": true,
+          "personId": "yewu_郑丽芬"
+        }
+      ],
+      "formConfirmed": true
+    },
+    {
+      "id": "hist_005",
+      "date": "2026-04-16",
+      "mode": "腾讯会议",
+      "note": "6.23敏敏参加内聘营销副总裁助理竞聘",
+      "time": "14:00-15:00",
+      "hostId": null,
+      "locked": false,
+      "status": "已开展",
+      "hostName": "刘思铭",
+      "notified": true,
+      "candidates": "李功镇大区外聘区域总监【谭健炜】",
+      "organizerId": null,
+      "ticketReady": true,
+      "interviewers": [
+        {
+          "slot": 0,
+          "deptId": "gaojixiao",
+          "locked": true,
+          "personId": "gaojixiao_禹巍巍"
+        },
+        {
+          "slot": 1,
+          "deptId": "jicai",
+          "locked": true,
+          "personId": "jicai_李小君"
+        },
+        {
+          "slot": 2,
+          "deptId": "zongban",
+          "locked": true,
+          "personId": "zongban_郑凯年"
+        },
+        {
+          "slot": 3,
+          "deptId": "renfa",
+          "locked": true,
+          "personId": "renfa_冯文玲"
+        },
+        {
+          "slot": 4,
+          "deptId": "pinpai",
+          "locked": true,
+          "personId": "pinpai_唐俪瑕"
+        }
+      ],
+      "formConfirmed": true
+    },
+    {
+      "id": "hist_006",
+      "date": "2026-05-19",
+      "mode": "腾讯会议",
+      "note": "",
+      "time": "14:00-15:00",
+      "hostId": null,
+      "locked": false,
+      "status": "已开展",
+      "hostName": "和雨涵",
+      "notified": true,
+      "candidates": "李功镇大区外聘区域总监【黄文锋-】",
+      "organizerId": null,
+      "ticketReady": true,
+      "interviewers": [
+        {
+          "slot": 0,
+          "deptId": "jicai",
+          "locked": true,
+          "personId": "jicai_李小君"
+        },
+        {
+          "slot": 1,
+          "deptId": "renzi",
+          "locked": true,
+          "personId": "renzi_廖思琪"
+        },
+        {
+          "slot": 2,
+          "deptId": "yewu",
+          "locked": true,
+          "personId": "yewu_郑丽芬"
+        },
+        {
+          "slot": 3,
+          "deptId": "shunlian",
+          "locked": true,
+          "personId": "shunlian_甘虹"
+        },
+        {
+          "slot": 4,
+          "deptId": "zichan",
+          "locked": true,
+          "personId": "zichan_童忠庆"
+        }
+      ],
+      "formConfirmed": true
+    },
+    {
+      "id": "hist_007",
+      "date": "2026-06-30",
+      "mode": "腾讯会议",
+      "note": "",
+      "time": "14:00-14:40",
+      "hostId": null,
+      "locked": false,
+      "status": "已开展",
+      "hostName": "美娜",
+      "notified": true,
+      "candidates": "李功镇大区外聘区域总监【谭皓】",
+      "organizerId": null,
+      "ticketReady": true,
+      "interviewers": [
+        {
+          "slot": 0,
+          "deptId": "yewu",
+          "locked": true,
+          "personId": "yewu_郑丽芬"
+        },
+        {
+          "slot": 1,
+          "deptId": "zichan",
+          "locked": true,
+          "personId": "zichan_童忠庆"
+        },
+        {
+          "slot": 2,
+          "deptId": "zongban",
+          "locked": true,
+          "personId": "zongban_郑雁璇"
+        },
+        {
+          "slot": 3,
+          "deptId": "renfa",
+          "locked": true,
+          "personId": "renfa_杨敏"
+        },
+        {
+          "slot": 4,
+          "deptId": "renzi",
+          "locked": true,
+          "personId": "renzi_廖思琪"
+        }
+      ],
+      "formConfirmed": true
+    },
+    {
+      "id": "hist_008",
+      "date": "2026-08-11",
+      "mode": "腾讯会议",
+      "note": "",
+      "time": "14:00-14:40",
+      "hostId": null,
+      "locked": false,
+      "status": "已开展",
+      "hostName": "陆俊杰",
+      "notified": true,
+      "candidates": "李功镇大区外聘区域总监【何东平】",
+      "organizerId": null,
+      "ticketReady": true,
+      "interviewers": [
+        {
+          "slot": 0,
+          "deptId": "jicai",
+          "locked": true,
+          "personId": "jicai_赵艺媛"
+        },
+        {
+          "slot": 1,
+          "deptId": "yewu",
+          "locked": true,
+          "personId": "yewu_胡雪琴"
+        },
+        {
+          "slot": 2,
+          "deptId": "pinpai",
+          "locked": true,
+          "personId": "pinpai_唐俪瑕"
+        },
+        {
+          "slot": 3,
+          "deptId": "fawu",
+          "locked": true,
+          "personId": "fawu_万恩芹"
+        },
+        {
+          "slot": 4,
+          "deptId": "renfa",
+          "locked": true,
+          "personId": "renfa_冯文玲"
+        }
+      ],
+      "formConfirmed": true
+    },
+    {
+      "id": "hist_009",
+      "date": "2026-08-20",
+      "mode": "腾讯会议",
+      "note": "",
+      "time": "14:00-14:40",
+      "hostId": null,
+      "locked": false,
+      "status": "待安排",
+      "hostName": "连思嘉",
+      "notified": false,
+      "candidates": "李功镇大区外聘区域总监【王奉翔】",
+      "organizerId": null,
+      "ticketReady": false,
+      "interviewers": [
+        {
+          "slot": 0,
+          "deptId": "pinkong",
+          "locked": true,
+          "personId": "pinkong_王祝青"
+        },
+        {
+          "slot": 1,
+          "deptId": "jicai",
+          "locked": true,
+          "personId": "jicai_李小君"
+        },
+        {
+          "slot": 2,
+          "deptId": "shunlian",
+          "locked": true,
+          "personId": "shunlian_甘虹"
+        },
+        {
+          "slot": 3,
+          "deptId": "renzi",
+          "locked": true,
+          "personId": "renzi_廖思琪"
+        },
+        {
+          "slot": 4,
+          "deptId": "zongban",
+          "locked": true,
+          "personId": "zongban_郑雁璇"
+        }
+      ],
+      "formConfirmed": false
+    },
+    {
+      "id": "smsyr4ipnenjr7",
+      "date": "2026-08-25",
+      "time": "14:00-14:40",
+      "mode": "腾讯会议",
+      "candidates": "",
+      "status": "待安排",
+      "hostId": "host_jj",
+      "organizerId": null,
+      "notified": false,
+      "formConfirmed": false,
+      "ticketReady": false,
+      "locked": false,
+      "note": "",
+      "interviewers": []
+    }
+  ],
   "settings": {
     "headsPerSession": 2,
     "assistantsPerSession": 3,
@@ -18,806 +530,347 @@
     "weekdays": [
       2,
       4
-    ]
+    ],
+    "lockPassword": "123456"
   },
+  "organizers": [],
   "departments": [
     {
       "id": "zongban",
       "name": "总裁办",
-      "shortName": "总裁办",
-      "order": 0,
-      "frequency": 1,
-      "color": "#2563eb",
       "note": "",
+      "color": "#2563eb",
+      "order": 0,
       "people": [
         {
           "id": "zongban_郑凯年",
           "name": "郑凯年",
+          "note": "",
           "role": "中心负责人",
           "enabled": true,
-          "note": "",
-          "maxConsecutive": 1,
-          "unavailable": []
+          "unavailable": [],
+          "maxConsecutive": 1
         },
         {
           "id": "zongban_郑雁璇",
           "name": "郑雁璇",
+          "note": "",
           "role": "助理",
           "enabled": true,
-          "note": "",
-          "maxConsecutive": 1,
-          "unavailable": []
+          "unavailable": [],
+          "maxConsecutive": 1
         }
-      ]
+      ],
+      "frequency": 1,
+      "shortName": "总裁办"
     },
     {
       "id": "renfa",
       "name": "人力发展中心",
-      "shortName": "人发",
-      "order": 1,
-      "frequency": 1,
-      "color": "#0f766e",
       "note": "",
+      "color": "#0f766e",
+      "order": 1,
       "people": [
         {
           "id": "renfa_冯文玲",
           "name": "冯文玲",
+          "note": "",
           "role": "助理",
           "enabled": true,
-          "note": "",
-          "maxConsecutive": 1,
-          "unavailable": []
+          "unavailable": [],
+          "maxConsecutive": 1
         },
         {
           "id": "renfa_杨敏",
           "name": "杨敏",
+          "note": "",
           "role": "助理",
           "enabled": true,
-          "note": "",
-          "maxConsecutive": 1,
-          "unavailable": []
+          "unavailable": [],
+          "maxConsecutive": 1
         }
-      ]
+      ],
+      "frequency": 1,
+      "shortName": "人发"
     },
     {
       "id": "fawu",
       "name": "法律服务中心",
-      "shortName": "法务",
-      "order": 2,
-      "frequency": 1,
-      "color": "#7c3aed",
       "note": "",
+      "color": "#7c3aed",
+      "order": 2,
       "people": [
         {
           "id": "fawu_万恩芹",
           "name": "万恩芹",
+          "note": "",
           "role": "中心负责人",
           "enabled": true,
-          "note": "",
-          "maxConsecutive": 1,
-          "unavailable": []
+          "unavailable": [],
+          "maxConsecutive": 1
         },
         {
           "id": "fawu_金灵",
           "name": "金灵",
+          "note": "未在当前名单中，可自行启用",
           "role": "助理",
           "enabled": false,
-          "note": "未在当前名单中，可自行启用",
-          "maxConsecutive": 1,
-          "unavailable": []
+          "unavailable": [],
+          "maxConsecutive": 1
         }
-      ]
+      ],
+      "frequency": 1,
+      "shortName": "法务"
     },
     {
       "id": "pinpai",
       "name": "品牌公关中心",
-      "shortName": "品牌",
-      "order": 3,
-      "frequency": 1,
-      "color": "#b45309",
       "note": "",
+      "color": "#b45309",
+      "order": 3,
       "people": [
         {
           "id": "pinpai_唐俪瑕",
           "name": "唐俪瑕",
+          "note": "",
           "role": "中心负责人",
           "enabled": true,
-          "note": "",
-          "maxConsecutive": 1,
-          "unavailable": []
+          "unavailable": [],
+          "maxConsecutive": 1
         },
         {
           "id": "pinpai_陈金月",
           "name": "陈金月",
+          "note": "未在当前名单中，可自行启用",
           "role": "助理",
           "enabled": false,
-          "note": "未在当前名单中，可自行启用",
-          "maxConsecutive": 1,
-          "unavailable": []
+          "unavailable": [],
+          "maxConsecutive": 1
         }
-      ]
+      ],
+      "frequency": 1,
+      "shortName": "品牌"
     },
     {
       "id": "yewu",
       "name": "业务运营中心",
-      "shortName": "业务",
-      "order": 4,
-      "frequency": 1,
-      "color": "#be123c",
       "note": "",
+      "color": "#be123c",
+      "order": 4,
       "people": [
         {
           "id": "yewu_胡雪琴",
           "name": "胡雪琴",
+          "note": "",
           "role": "中心负责人",
           "enabled": true,
-          "note": "",
-          "maxConsecutive": 1,
-          "unavailable": []
+          "unavailable": [],
+          "maxConsecutive": 1
         },
         {
           "id": "yewu_郑丽芬",
           "name": "郑丽芬",
+          "note": "",
           "role": "助理",
           "enabled": true,
-          "note": "",
-          "maxConsecutive": 1,
-          "unavailable": []
+          "unavailable": [],
+          "maxConsecutive": 1
         }
-      ]
+      ],
+      "frequency": 1,
+      "shortName": "业务"
     },
     {
       "id": "renzi",
       "name": "人力资源中心",
-      "shortName": "人资",
-      "order": 5,
-      "frequency": 1,
-      "color": "#4f46e5",
       "note": "",
+      "color": "#4f46e5",
+      "order": 5,
       "people": [
         {
           "id": "renzi_杨彦",
           "name": "杨彦",
+          "note": "",
           "role": "中心负责人",
           "enabled": true,
-          "note": "",
-          "maxConsecutive": 1,
-          "unavailable": []
+          "unavailable": [],
+          "maxConsecutive": 1
         },
         {
           "id": "renzi_廖思琪",
           "name": "廖思琪",
+          "note": "",
           "role": "助理",
           "enabled": true,
-          "note": "",
-          "maxConsecutive": 1,
-          "unavailable": []
+          "unavailable": [],
+          "maxConsecutive": 1
         }
-      ]
+      ],
+      "frequency": 1,
+      "shortName": "人资"
     },
     {
       "id": "zichan",
       "name": "资产管理中心",
-      "shortName": "资产",
-      "order": 6,
-      "frequency": 2,
-      "color": "#0d9488",
       "note": "",
+      "color": "#0d9488",
+      "order": 6,
       "people": [
         {
           "id": "zichan_罗立平",
           "name": "罗立平",
+          "note": "罗总暂时不轮",
           "role": "中心负责人",
           "enabled": false,
-          "note": "罗总暂时不轮",
-          "maxConsecutive": 1,
-          "unavailable": []
+          "unavailable": [],
+          "maxConsecutive": 1
         },
         {
           "id": "zichan_童忠庆",
           "name": "童忠庆",
+          "note": "休产检",
           "role": "助理",
           "enabled": false,
-          "note": "休产检",
-          "maxConsecutive": 1,
-          "unavailable": []
+          "unavailable": [],
+          "maxConsecutive": 1
         }
-      ]
+      ],
+      "frequency": 2,
+      "shortName": "资产"
     },
     {
       "id": "jicai",
       "name": "计划财务中心",
-      "shortName": "计财",
-      "order": 7,
-      "frequency": 1,
-      "color": "#d97706",
       "note": "",
+      "color": "#d97706",
+      "order": 7,
       "people": [
         {
           "id": "jicai_胡文我",
           "name": "胡文我",
+          "note": "",
           "role": "中心负责人",
           "enabled": true,
-          "note": "",
-          "maxConsecutive": 1,
-          "unavailable": []
+          "unavailable": [],
+          "maxConsecutive": 1
         },
         {
           "id": "jicai_付佳",
           "name": "付佳",
+          "note": "",
           "role": "助理",
           "enabled": true,
-          "note": "",
-          "maxConsecutive": 1,
-          "unavailable": []
+          "unavailable": [],
+          "maxConsecutive": 1
         },
         {
           "id": "jicai_李小君",
           "name": "李小君",
+          "note": "线上竞聘优先安排",
           "role": "助理",
           "enabled": true,
-          "note": "线上竞聘优先安排",
-          "maxConsecutive": 1,
-          "unavailable": []
+          "unavailable": [],
+          "maxConsecutive": 1
         },
         {
           "id": "jicai_赵艺媛",
           "name": "赵艺媛",
+          "note": "",
           "role": "中心负责人",
           "enabled": true,
-          "note": "",
-          "maxConsecutive": 1,
-          "unavailable": []
+          "unavailable": [],
+          "maxConsecutive": 1
         },
         {
           "id": "jicai_张丽华",
           "name": "张丽华",
+          "note": "",
           "role": "助理",
           "enabled": true,
-          "note": "",
-          "maxConsecutive": 1,
-          "unavailable": []
+          "unavailable": [],
+          "maxConsecutive": 1
         }
-      ]
+      ],
+      "frequency": 1,
+      "shortName": "计财"
     },
     {
       "id": "pinkong",
       "name": "品质管控中心",
-      "shortName": "品控",
-      "order": 8,
-      "frequency": 1,
-      "color": "#db2777",
       "note": "",
+      "color": "#db2777",
+      "order": 8,
       "people": [
         {
           "id": "pinkong_王祝青",
           "name": "王祝青",
+          "note": "",
           "role": "中心负责人",
           "enabled": true,
-          "note": "",
-          "maxConsecutive": 1,
-          "unavailable": []
+          "unavailable": [],
+          "maxConsecutive": 1
         },
         {
           "id": "pinkong_邢冬悦",
           "name": "邢冬悦",
+          "note": "未在当前名单中，可自行启用",
           "role": "助理",
           "enabled": false,
-          "note": "未在当前名单中，可自行启用",
-          "maxConsecutive": 1,
-          "unavailable": []
+          "unavailable": [],
+          "maxConsecutive": 1
         }
-      ]
+      ],
+      "frequency": 1,
+      "shortName": "品控"
     },
     {
       "id": "gaojixiao",
       "name": "高绩效发展中心",
-      "shortName": "高绩效",
-      "order": 9,
-      "frequency": 1,
-      "color": "#059669",
       "note": "",
+      "color": "#059669",
+      "order": 9,
       "people": [
         {
           "id": "gaojixiao_禹巍巍",
           "name": "禹巍巍",
+          "note": "精英会前半月不安排，后面连续安排多场",
           "role": "中心负责人",
           "enabled": true,
-          "note": "精英会前半月不安排，后面连续安排多场",
-          "maxConsecutive": 1,
-          "unavailable": []
+          "unavailable": [],
+          "maxConsecutive": 1
         },
         {
           "id": "gaojixiao_庄思弘",
           "name": "庄思弘",
+          "note": "精英会前半月不安排，后面连续安排多场",
           "role": "助理",
           "enabled": true,
-          "note": "精英会前半月不安排，后面连续安排多场",
-          "maxConsecutive": 1,
-          "unavailable": []
+          "unavailable": [],
+          "maxConsecutive": 1
         }
-      ]
+      ],
+      "frequency": 1,
+      "shortName": "高绩效"
     },
     {
       "id": "shunlian",
       "name": "顺联担保",
-      "shortName": "顺联",
-      "order": 10,
-      "frequency": 2,
-      "color": "#1d4ed8",
       "note": "",
+      "color": "#1d4ed8",
+      "order": 10,
       "people": [
         {
           "id": "shunlian_甘虹",
           "name": "甘虹",
+          "note": "",
           "role": "中心负责人",
           "enabled": true,
-          "note": "",
-          "maxConsecutive": 1,
-          "unavailable": []
+          "unavailable": [],
+          "maxConsecutive": 1
         }
-      ]
+      ],
+      "frequency": 2,
+      "shortName": "顺联"
     }
-  ],
-  "hosts": [
-    {
-      "id": "host_sj",
-      "name": "连思嘉",
-      "enabled": true,
-      "note": "主持人",
-      "maxConsecutive": 1,
-      "unavailable": []
-    },
-    {
-      "id": "host_pp",
-      "name": "彭魁博",
-      "enabled": true,
-      "note": "主持人",
-      "maxConsecutive": 1,
-      "unavailable": []
-    },
-    {
-      "id": "host_yh",
-      "name": "和雨涵",
-      "enabled": true,
-      "note": "主持人",
-      "maxConsecutive": 1,
-      "unavailable": []
-    },
-    {
-      "id": "host_jj",
-      "name": "陆俊杰",
-      "enabled": true,
-      "note": "主持人",
-      "maxConsecutive": 1,
-      "unavailable": []
-    },
-    {
-      "id": "host_sm",
-      "name": "刘思铭",
-      "enabled": true,
-      "note": "主持人",
-      "maxConsecutive": 1,
-      "unavailable": []
-    }
-  ],
-  "organizers": [],
-  "sessions": [
-    {
-      "id": "hist_001",
-      "date": "2026-01-20",
-      "time": "14:00-15:00",
-      "mode": "腾讯会议",
-      "candidates": "李功镇大区外聘区域总监【周丘岳】",
-      "status": "已开展",
-      "hostName": "美娜",
-      "hostId": null,
-      "organizerId": null,
-      "note": "",
-      "interviewers": [
-        {
-          "slot": 0,
-          "deptId": "jicai",
-          "personId": "jicai_李小君",
-          "locked": true
-        },
-        {
-          "slot": 1,
-          "deptId": "zongban",
-          "personId": "zongban_郑雁璇",
-          "locked": true
-        },
-        {
-          "slot": 2,
-          "deptId": "renfa",
-          "personId": "renfa_冯文玲",
-          "locked": true
-        },
-        {
-          "slot": 3,
-          "deptId": "pinpai",
-          "personId": "pinpai_陈金月",
-          "locked": true
-        },
-        {
-          "slot": 4,
-          "deptId": "renzi",
-          "personId": "renzi_廖思琪",
-          "locked": true
-        }
-      ]
-    },
-    {
-      "id": "hist_002",
-      "date": "2026-02-26",
-      "time": "14:00-15:00",
-      "mode": "1501会议室",
-      "candidates": "孟凡振大区外聘区域总监【陈业锋】",
-      "status": "已开展",
-      "hostName": "刘思铭",
-      "hostId": null,
-      "organizerId": null,
-      "note": "",
-      "interviewers": [
-        {
-          "slot": 0,
-          "deptId": "gaojixiao",
-          "personId": "gaojixiao_禹巍巍",
-          "locked": true
-        },
-        {
-          "slot": 1,
-          "deptId": "pinkong",
-          "personId": "pinkong_王祝青",
-          "locked": true
-        },
-        {
-          "slot": 2,
-          "deptId": "fawu",
-          "personId": "fawu_万恩芹",
-          "locked": true
-        },
-        {
-          "slot": 3,
-          "deptId": "jicai",
-          "personId": "jicai_张丽华",
-          "locked": true
-        },
-        {
-          "slot": 4,
-          "deptId": "yewu",
-          "personId": "yewu_胡雪琴",
-          "locked": true
-        }
-      ]
-    },
-    {
-      "id": "hist_003",
-      "date": "2026-03-17",
-      "time": "14:00-15:00",
-      "mode": "1501会议室",
-      "candidates": "贺玲大区外聘区域总监【张奕萱】",
-      "status": "已开展",
-      "hostName": "和雨涵",
-      "hostId": null,
-      "organizerId": null,
-      "note": "",
-      "interviewers": [
-        {
-          "slot": 0,
-          "deptId": "renzi",
-          "personId": "renzi_廖思琪",
-          "locked": true
-        },
-        {
-          "slot": 1,
-          "deptId": "zichan",
-          "personId": "zichan_童忠庆",
-          "locked": true
-        },
-        {
-          "slot": 2,
-          "deptId": "pinpai",
-          "personId": "pinpai_唐俪瑕",
-          "locked": true
-        },
-        {
-          "slot": 3,
-          "deptId": "shunlian",
-          "personId": "shunlian_甘虹",
-          "locked": true
-        },
-        {
-          "slot": 4,
-          "deptId": "zongban",
-          "personId": "zongban_郑雁璇",
-          "locked": true
-        }
-      ]
-    },
-    {
-      "id": "hist_004",
-      "date": "2026-04-09",
-      "time": "14:00-15:00",
-      "mode": "1501会议室",
-      "candidates": "李莉大区外聘区域总监【陈子千】",
-      "status": "已开展",
-      "hostName": "美娜",
-      "hostId": null,
-      "organizerId": null,
-      "note": "因资产、品控、顺联、法务、品牌两轮排一次，故本次人资连续两次（结合本次负责人少），下场不排",
-      "interviewers": [
-        {
-          "slot": 0,
-          "deptId": "pinkong",
-          "personId": "pinkong_王祝青",
-          "locked": true
-        },
-        {
-          "slot": 1,
-          "deptId": "renfa",
-          "personId": "renfa_杨敏",
-          "locked": true
-        },
-        {
-          "slot": 2,
-          "deptId": "renzi",
-          "personId": "renzi_杨彦",
-          "locked": true
-        },
-        {
-          "slot": 3,
-          "deptId": "jicai",
-          "personId": "jicai_张丽华",
-          "locked": true
-        },
-        {
-          "slot": 4,
-          "deptId": "yewu",
-          "personId": "yewu_郑丽芬",
-          "locked": true
-        }
-      ]
-    },
-    {
-      "id": "hist_005",
-      "date": "2026-04-16",
-      "time": "14:00-15:00",
-      "mode": "腾讯会议",
-      "candidates": "李功镇大区外聘区域总监【谭健炜】",
-      "status": "已开展",
-      "hostName": "刘思铭",
-      "hostId": null,
-      "organizerId": null,
-      "note": "6.23敏敏参加内聘营销副总裁助理竞聘",
-      "interviewers": [
-        {
-          "slot": 0,
-          "deptId": "gaojixiao",
-          "personId": "gaojixiao_禹巍巍",
-          "locked": true
-        },
-        {
-          "slot": 1,
-          "deptId": "jicai",
-          "personId": "jicai_李小君",
-          "locked": true
-        },
-        {
-          "slot": 2,
-          "deptId": "zongban",
-          "personId": "zongban_郑凯年",
-          "locked": true
-        },
-        {
-          "slot": 3,
-          "deptId": "renfa",
-          "personId": "renfa_冯文玲",
-          "locked": true
-        },
-        {
-          "slot": 4,
-          "deptId": "pinpai",
-          "personId": "pinpai_唐俪瑕",
-          "locked": true
-        }
-      ]
-    },
-    {
-      "id": "hist_006",
-      "date": "2026-05-19",
-      "time": "14:00-15:00",
-      "mode": "腾讯会议",
-      "candidates": "李功镇大区外聘区域总监【黄文锋-】",
-      "status": "已开展",
-      "hostName": "和雨涵",
-      "hostId": null,
-      "organizerId": null,
-      "note": "",
-      "interviewers": [
-        {
-          "slot": 0,
-          "deptId": "jicai",
-          "personId": "jicai_李小君",
-          "locked": true
-        },
-        {
-          "slot": 1,
-          "deptId": "renzi",
-          "personId": "renzi_廖思琪",
-          "locked": true
-        },
-        {
-          "slot": 2,
-          "deptId": "yewu",
-          "personId": "yewu_郑丽芬",
-          "locked": true
-        },
-        {
-          "slot": 3,
-          "deptId": "shunlian",
-          "personId": "shunlian_甘虹",
-          "locked": true
-        },
-        {
-          "slot": 4,
-          "deptId": "zichan",
-          "personId": "zichan_童忠庆",
-          "locked": true
-        }
-      ]
-    },
-    {
-      "id": "hist_007",
-      "date": "2026-06-30",
-      "time": "14:00-14:40",
-      "mode": "腾讯会议",
-      "candidates": "李功镇大区外聘区域总监【谭皓】",
-      "status": "已开展",
-      "hostName": "美娜",
-      "hostId": null,
-      "organizerId": null,
-      "note": "",
-      "interviewers": [
-        {
-          "slot": 0,
-          "deptId": "yewu",
-          "personId": "yewu_郑丽芬",
-          "locked": true
-        },
-        {
-          "slot": 1,
-          "deptId": "zichan",
-          "personId": "zichan_童忠庆",
-          "locked": true
-        },
-        {
-          "slot": 2,
-          "deptId": "zongban",
-          "personId": "zongban_郑雁璇",
-          "locked": true
-        },
-        {
-          "slot": 3,
-          "deptId": "renfa",
-          "personId": "renfa_杨敏",
-          "locked": true
-        },
-        {
-          "slot": 4,
-          "deptId": "renzi",
-          "personId": "renzi_廖思琪",
-          "locked": true
-        }
-      ]
-    },
-    {
-      "id": "hist_008",
-      "date": "2026-08-11",
-      "time": "14:00-14:40",
-      "mode": "腾讯会议",
-      "candidates": "李功镇大区外聘区域总监【何东平】",
-      "status": "已开展",
-      "hostName": "陆俊杰",
-      "hostId": null,
-      "organizerId": null,
-      "note": "",
-      "interviewers": [
-        {
-          "slot": 0,
-          "deptId": "jicai",
-          "personId": "jicai_赵艺媛",
-          "locked": true
-        },
-        {
-          "slot": 1,
-          "deptId": "yewu",
-          "personId": "yewu_胡雪琴",
-          "locked": true
-        },
-        {
-          "slot": 2,
-          "deptId": "pinpai",
-          "personId": "pinpai_唐俪瑕",
-          "locked": true
-        },
-        {
-          "slot": 3,
-          "deptId": "fawu",
-          "personId": "fawu_万恩芹",
-          "locked": true
-        },
-        {
-          "slot": 4,
-          "deptId": "renfa",
-          "personId": "renfa_冯文玲",
-          "locked": true
-        }
-      ]
-    },
-    {
-      "id": "hist_009",
-      "date": "2026-08-20",
-      "time": "14:00-14:40",
-      "mode": "腾讯会议",
-      "candidates": "李功镇大区外聘区域总监【王奉翔】",
-      "status": "待安排",
-      "hostName": "连思嘉",
-      "hostId": null,
-      "organizerId": null,
-      "note": "",
-      "interviewers": [
-        {
-          "slot": 0,
-          "deptId": "pinkong",
-          "personId": "pinkong_王祝青",
-          "locked": true
-        },
-        {
-          "slot": 1,
-          "deptId": "jicai",
-          "personId": "jicai_李小君",
-          "locked": true
-        },
-        {
-          "slot": 2,
-          "deptId": "shunlian",
-          "personId": "shunlian_甘虹",
-          "locked": true
-        },
-        {
-          "slot": 3,
-          "deptId": "renzi",
-          "personId": "renzi_廖思琪",
-          "locked": true
-        },
-        {
-          "slot": 4,
-          "deptId": "zongban",
-          "personId": "zongban_郑雁璇",
-          "locked": true
-        }
-      ]
-    }
-  ],
-  "cursors": {
-    "deptIndex": 1,
-    "headIndex": 0,
-    "assistantIndex": 1,
-    "deptPassCounts": {
-      "zongban": 5,
-      "renfa": 5,
-      "fawu": 2,
-      "pinpai": 4,
-      "yewu": 5,
-      "renzi": 6,
-      "zichan": 6,
-      "jicai": 7,
-      "pinkong": 3,
-      "gaojixiao": 2,
-      "shunlian": 6
-    },
-    "hostIndex": 1,
-    "organizerIndex": 0
-  }
+  ]
 }

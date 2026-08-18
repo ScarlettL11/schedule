@@ -770,6 +770,10 @@ table.grid-table {
 </style>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.469.0/dist/umd/lucide.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script>
+    window.SUPABASE_URL = "https://vkzvxpdddmtrtqpiddug.supabase.co";
+    window.SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrenZ4cGRkZG10cnRxcGlkZHVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwNTEzMTYsImV4cCI6MjEwMjYyNzMxNn0.4TDjzYw3yL2yIAKWbpkBWGgCHqiNxlnCKQKRFH8dNQ4";
+  </script>
 </head>
 <body>
   <header class="topbar">
@@ -1651,6 +1655,8 @@ window.SEED_DATA = {
 
   const STORAGE_KEY = "interviewer-scheduler-state-v4";
   const API_BASE = (new URLSearchParams(location.search).get("api") || window.SCHEDULER_API_BASE || "").replace(/\/$/, "");
+  const SUPABASE_URL = new URLSearchParams(location.search).get("supabaseUrl") || window.SUPABASE_URL || "";
+  const SUPABASE_KEY = new URLSearchParams(location.search).get("supabaseKey") || window.SUPABASE_KEY || "";
   let state = null;
   let currentView = "dashboard";
   let openDeptIds = new Set();
@@ -1666,6 +1672,8 @@ window.SEED_DATA = {
   let recordsFilter = "all";
   let serverMode = false;
   let serverSaveTimer = null;
+  let supabaseClient = null;
+  let supabaseChannel = null;
 
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -2383,7 +2391,25 @@ window.SEED_DATA = {
     }
     if (serverMode) {
       clearTimeout(serverSaveTimer);
-      serverSaveTimer = setTimeout(postStateToServer, 250);
+      serverSaveTimer = setTimeout((SUPABASE_URL && SUPABASE_KEY) ? saveToSupabase : postStateToServer, 250);
+    }
+  }
+
+  async function saveToSupabase() {
+    if (!SUPABASE_URL || !SUPABASE_KEY) return;
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/state?on_conflict=id`, {
+        method: "POST",
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          "Content-Type": "application/json",
+          Prefer: "resolution=merge-duplicates,return=minimal",
+        },
+        body: JSON.stringify({ id: 1, data: state, updated_at: new Date().toISOString() }),
+      });
+    } catch (err) {
+      console.warn("Supabase 保存失败", err);
     }
   }
 
@@ -2499,7 +2525,7 @@ window.SEED_DATA = {
       name = nameMatch ? nameMatch[1].trim() : (rawCandidate || "待定");
     }
     const mode = (session.mode || "").trim();
-    const form = mode === "线下" ? "**线下**" : "**腾讯会议**（会议号由主持人私聊发送）";
+    const form = mode === "线下" ? "线下" : "腾讯会议（会议号由主持人私聊发送）";
     const host = hostDisplayName(session) || "xxx";
     const interviewerLines = (session.interviewers || [])
       .filter((iv) => iv.personId && iv.deptId)
@@ -2510,28 +2536,28 @@ window.SEED_DATA = {
       });
     const interviewerBlock = interviewerLines.length ? interviewerLines.map((line) => ` • ${line}`).join("\n") : " • 待定";
     return [
-      "📣 **【竞聘通知｜外聘区域总监】**",
+      "📣 【竞聘通知｜外聘区域总监】",
       "",
       "各位领导、同事：",
       "",
-      region ? `现安排**${region}外聘区域总监候选人【${name}】**进行线上竞聘，具体安排如下：` : `现安排**外聘区域总监候选人【${name}】**进行线上竞聘，具体安排如下：`,
+      region ? `现安排${region}外聘区域总监候选人【${name}】进行线上竞聘，具体安排如下：` : `现安排外聘区域总监候选人【${name}】进行线上竞聘，具体安排如下：`,
       "",
-      "🕑 **竞聘时间**",
-      ` **${fmtDateShortWeekday(session.date)}${timeDisplay}**`,
+      "🕑 竞聘时间",
+      ` ${fmtDateShortWeekday(session.date)}${timeDisplay}`,
       "",
-      "👤 **竞聘人员**",
-      ` **${name}**`,
+      "👤 竞聘人员",
+      ` ${name}`,
       "",
-      "💻 **竞聘形式**",
+      "💻 竞聘形式",
       ` ${form}`,
       "",
-      "🎙️ **竞聘主持**",
-      ` 人力发展中心 **${host}**`,
+      "🎙️ 竞聘主持",
+      ` 人力发展中心 ${host}`,
       "",
-      "👥 **面试官**",
+      "👥 面试官",
       interviewerBlock,
       "",
-      "📌 **温馨提示**",
+      "📌 温馨提示",
       " 请各位面试官提前安排好时间，准时参会。",
     ].join("\n");
   }
@@ -3674,6 +3700,23 @@ window.SEED_DATA = {
     if (window.lucide) window.lucide.createIcons(modal);
   }
 
+  function syncDraftFromModal() {
+    if (!draftSession) return;
+    draftSession.date = $("#sesDate")?.value || draftSession.date;
+    const start = $("#sesTimeStart")?.value || "14:00";
+    const end = $("#sesTimeEnd")?.value || "14:40";
+    draftSession.time = `${start}-${end}`;
+    draftSession.mode = $("#sesMode")?.value || draftSession.mode;
+    draftSession.candidates = $("#sesCandidates")?.value || "";
+    draftSession.status = $("#sesStatus")?.value || draftSession.status;
+    draftSession.hostId = $("#sesHost")?.value || null;
+    draftSession.notified = $("#sesNotified")?.checked === true;
+    draftSession.formConfirmed = $("#sesFormConfirmed")?.checked === true;
+    draftSession.ticketReady = $("#sesTicketReady")?.checked === true;
+    draftSession.locked = $("#sesLocked")?.checked === true;
+    draftSession.note = $("#sesNote")?.value || "";
+  }
+
   function saveSessionFromModal() {
     const isNew = selectedSessionId === "new";
     const session = isNew ? draftSession : state.sessions.find((s) => s.id === selectedSessionId);
@@ -4373,6 +4416,7 @@ window.SEED_DATA = {
     if (action === "add-session") { addSession(); return; }
     if (action === "edit-session") { openSessionModal(id); return; }
     if (action === "copy-notice") {
+      if (id === "new") syncDraftFromModal();
       const session = id === "new" ? draftSession : state.sessions.find((s) => s.id === id);
       if (session) {
         if (id !== "new") {
@@ -4387,6 +4431,7 @@ window.SEED_DATA = {
     if (action === "fill-session") {
       if (id === "new") {
         if (!draftSession) return;
+        syncDraftFromModal();
         const cursorBackup = deepClone(state.cursors);
         state.sessions.push(draftSession);
         const result = fillSession(draftSession);
@@ -4417,6 +4462,7 @@ window.SEED_DATA = {
     if (action === "save-session") { saveSessionFromModal(); return; }
     if (action === "delete-session") { deleteSession(id); return; }
     if (action === "add-slot") {
+      if (selectedSessionId === "new") syncDraftFromModal();
       const session = selectedSessionId === "new" ? draftSession : state.sessions.find((s) => s.id === selectedSessionId);
       if (!session) return;
       const slots = session.interviewers || [];
@@ -4542,6 +4588,10 @@ window.SEED_DATA = {
   });
 
   async function initServerMode() {
+    if (SUPABASE_URL && SUPABASE_KEY) {
+      await initSupabaseMode();
+      return;
+    }
     try {
       const res = await fetch(`${API_BASE}/api/state`);
       if (!res.ok) return;
@@ -4569,8 +4619,64 @@ window.SEED_DATA = {
     }
   }
 
+  async function initSupabaseMode() {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/state?select=data&id=eq.1`, {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+        },
+      });
+      if (!res.ok) throw new Error("state fetch failed");
+      const rows = await res.json();
+      if (rows.length && rows[0].data && rows[0].data.departments && rows[0].data.sessions) {
+        state = normalizeState(rows[0].data);
+      }
+      serverMode = true;
+      markPassedSessions();
+      saveState();
+      renderCurrentView();
+      const el = document.getElementById("serverStatus");
+      if (el) {
+        el.textContent = "服务器同步中";
+        el.style.color = "var(--green)";
+      }
+      setInterval(pollSupabaseState, 4000);
+    } catch (err) {
+      console.warn("Supabase 连接失败，使用本地模式", err);
+      const el = document.getElementById("serverStatus");
+      if (el) {
+        el.textContent = "本地模式";
+        el.style.color = "var(--muted)";
+      }
+    }
+  }
+
+  async function pollSupabaseState() {
+    if (!serverMode || !SUPABASE_URL || !SUPABASE_KEY) return;
+    if (document.getElementById("modalRoot").innerHTML) return;
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/state?select=data&id=eq.1`, {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+        },
+      });
+      if (!res.ok) return;
+      const rows = await res.json();
+      const remote = rows[0] && rows[0].data;
+      if (remote && remote.departments && remote.sessions && JSON.stringify(remote) !== JSON.stringify(state)) {
+        state = normalizeState(remote);
+        markPassedSessions();
+        renderCurrentView();
+      }
+    } catch (err) {
+      console.warn("Supabase 同步失败", err);
+    }
+  }
+
   async function pollServerState() {
-    if (!serverMode) return;
+    if (!serverMode || (SUPABASE_URL && SUPABASE_KEY)) return;
     if (document.getElementById("modalRoot").innerHTML) return;
     try {
       const res = await fetch(`${API_BASE}/api/state`);

@@ -1,0 +1,4604 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>面试官轮值排班台</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --panel-soft: #fdf8f2;
+  --border: #eee2d6;
+  --border-strong: #dcc9b4;
+  --text: #2c1d17;
+  --muted: #7a6255;
+  --accent: #c43c1f;
+  --accent-soft: #fdeae3;
+  --blue: #c07a0a;
+  --blue-soft: #fdf0d5;
+  --amber: #b45309;
+  --amber-soft: #fdf0dd;
+  --rose: #b91c1c;
+  --rose-soft: #fde8e8;
+  --green: #b42318;
+  --green-soft: #fdece8;
+  --radius: 8px;
+  --shadow: 0 1px 2px rgba(74, 42, 20, .05), 0 8px 24px rgba(74, 42, 20, .08);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button { cursor: pointer; }
+
+.topbar {
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 20px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+.brand strong {
+  display: block;
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+.brand-sub {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.save-state {
+  color: var(--muted);
+  font-size: 12px;
+  margin-right: 4px;
+  white-space: nowrap;
+}
+
+.server-status {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 6px 11px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--text);
+  white-space: nowrap;
+  transition: background .15s ease, border-color .15s ease, transform .1s ease;
+}
+
+.btn:hover { background: var(--panel-soft); border-color: var(--border-strong); }
+.btn:active { transform: translateY(1px); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { background: #a83118; }
+.btn.blue { background: var(--blue); border-color: var(--blue); color: #fff; }
+.btn.blue:hover { background: #9c6408; }
+.btn.danger { background: var(--rose); border-color: var(--rose); color: #fff; }
+.btn.danger:hover { background: #9c1717; }
+.btn.ghost { background: transparent; }
+.btn.small { min-height: 28px; padding: 3px 8px; font-size: 13px; }
+.btn.icon-only { width: 34px; padding: 0; }
+.danger-text { color: var(--rose); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn svg { width: 15px; height: 15px; }
+
+.app-shell {
+  display: flex;
+  min-height: calc(100vh - 58px);
+}
+
+.sidebar {
+  width: 216px;
+  flex: 0 0 216px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 14px 10px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+}
+
+.nav { display: flex; flex-direction: column; gap: 4px; }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  text-align: left;
+}
+
+.nav-item:hover { background: var(--panel-soft); color: var(--text); }
+.nav-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.nav-item svg { width: 17px; height: 17px; }
+
+.sidebar-foot {
+  padding: 12px 10px;
+  color: var(--muted);
+  font-size: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.sidebar-foot p { margin: 0; }
+
+.main {
+  flex: 1;
+  min-width: 0;
+  padding: 20px 22px 40px;
+}
+
+.view { display: none; }
+.view.active { display: block; animation: fadeIn .18s ease; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: none; }
+}
+
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.3;
+}
+
+.page-desc {
+  margin: 4px 0 0;
+  color: var(--muted);
+  max-width: 720px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.toolbar .spacer { flex: 1; }
+
+.input, .select, .textarea {
+  min-height: 34px;
+  padding: 6px 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+  outline: none;
+}
+
+.input::placeholder, .textarea::placeholder {
+  color: var(--muted);
+  opacity: .8;
+}
+
+.input:focus, .select:focus, .textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, .12);
+}
+
+.textarea { min-height: 74px; resize: vertical; }
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.panel-pad { padding: 16px; }
+
+.process-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.process-step {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 16px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+}
+
+.process-step h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+
+.process-step p {
+  margin: 0 0 10px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.process-num {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 13px 16px;
+  background: var(--panel-soft);
+  border-bottom: 1px solid var(--border);
+}
+.panel-head h2, .panel-head h3 { margin: 0; font-size: 15px; }
+.panel-head .sub { color: var(--muted); font-size: 12px; font-weight: 400; }
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stat {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+}
+
+.stat .label {
+  color: var(--muted);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stat .value {
+  font-size: 26px;
+  font-weight: 700;
+  margin-top: 4px;
+  line-height: 1.2;
+}
+
+.stat .value.small { font-size: 17px; }
+.stat .hint { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.stat.accent { border-top: 3px solid var(--accent); }
+.stat.blue { border-top: 3px solid var(--blue); }
+.stat.amber { border-top: 3px solid var(--amber); }
+.stat.rose { border-top: 3px solid var(--rose); }
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1.4fr .9fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.stack { display: flex; flex-direction: column; gap: 14px; }
+
+.table-wrap {
+  overflow-x: auto;
+  border-radius: var(--radius);
+}
+
+table.grid-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+}
+
+.grid-table th {
+  background: #fbf1e6;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.grid-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.grid-table tr:last-child td { border-bottom: 0; }
+.grid-table tbody tr { transition: background .12s ease; }
+.grid-table tbody tr:hover { background: var(--panel-soft); }
+.grid-table .num { font-variant-numeric: tabular-nums; }
+
+.date-cell {
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.date-cell small { display: block; color: var(--muted); font-weight: 400; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 5px; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1.6;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.chip .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: 0 0 7px;
+  background: currentColor;
+  opacity: .7;
+}
+
+.chip.missing { background: var(--rose-soft); color: var(--rose); }
+.chip.warn { background: var(--amber-soft); color: var(--amber); }
+.chip.ok { background: var(--green-soft); color: var(--green); }
+.chip.neutral { background: #eef1f4; color: var(--muted); }
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.status-pill.todo { background: var(--amber-soft); color: var(--amber); }
+.status-pill.done { background: var(--green-soft); color: var(--green); }
+.status-pill.cancel { background: #eef1f4; color: var(--muted); }
+.status-pill.confirmed { background: #e8f0ff; color: #2563eb; }
+.status-pill.pending { background: var(--amber-soft); color: var(--amber); }
+.status-pill.notice { background: #fdeedb; color: #c2540a; }
+.status-pill.error { background: var(--rose-soft); color: var(--rose); }
+
+.empty {
+  padding: 34px 16px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.empty .big { font-size: 15px; font-weight: 600; color: var(--text); }
+.empty p { margin: 6px 0 0; }
+
+.recent-list { display: flex; flex-direction: column; }
+.recent-card { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+.recent-card:last-child { border-bottom: 0; }
+.recent-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.recent-head strong { font-size: 14px; }
+.recent-candidate { margin-top: 6px; font-weight: 600; }
+.recent-meta { margin-top: 4px; color: var(--muted); font-size: 13px; }
+.warn-line { margin: 8px 0; color: var(--amber); font-size: 12px; }
+
+.todo-list { padding: 4px 16px 12px; }
+.todo-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.todo-item:last-child { border-bottom: 0; }
+.todo-mark { width: 20px; flex: 0 0 20px; text-align: center; }
+.todo-text { flex: 1; min-width: 0; }
+.todo-clear { color: var(--green); }
+.todo-group { padding: 12px 0 4px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.todo-done { color: var(--muted); }
+.todo-title { font-weight: 600; }
+.todo-sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.todo-step-main { font-size: 15px; font-weight: 700; }
+.todo-tags { margin-top: 4px; }
+
+.rotation-now { display: flex; justify-content: space-between; gap: 10px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel-soft); }
+.rotation-now span { color: var(--muted); }
+.rotation-now strong { text-align: right; }
+
+.calendar-week { display: grid; grid-template-columns: repeat(7, minmax(140px, 1fr)); overflow-x: auto; }
+.calendar-day { min-height: 320px; border-right: 1px solid var(--border); padding: 8px; }
+.calendar-day:last-child { border-right: 0; }
+.calendar-day.today { background: var(--accent-soft); }
+.cal-day-head { display: flex; justify-content: space-between; padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid var(--border); }
+.cal-day-head span { color: var(--muted); font-size: 12px; }
+.cal-session { padding: 8px; margin-bottom: 8px; border: 1px solid var(--border); border-left: 3px solid var(--muted); border-radius: 6px; cursor: pointer; background: var(--panel); }
+.cal-session.done { border-left-color: var(--green); }
+.cal-session.confirmed { border-left-color: #2563eb; }
+.cal-session.pending { border-left-color: var(--amber); }
+.cal-session.notice { border-left-color: #c2540a; }
+.cal-session.error { border-left-color: var(--rose); }
+.cal-session.cancel { border-left-color: #94a3b8; }
+.cal-time { font-weight: 700; font-size: 12px; }
+.cal-name { font-weight: 600; margin: 2px 0; }
+.cal-interviewers { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+.cal-empty { color: var(--muted); text-align: center; padding: 10px 0; }
+
+.rotation-chain { display: flex; align-items: stretch; gap: 6px; overflow-x: auto; padding: 16px; }
+.chain-node { flex: 0 0 auto; min-width: 108px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); text-align: center; }
+.chain-node.current { border-color: var(--accent); background: var(--accent-soft); }
+.chain-node.paused { opacity: .65; }
+.chain-center { font-weight: 700; }
+.chain-person { color: var(--muted); font-size: 12px; margin: 4px 0; }
+.chain-status { font-size: 12px; color: var(--green); }
+.chain-node.current .chain-status { color: var(--accent); }
+.chain-node.paused .chain-status { color: var(--rose); }
+.chain-arrow { align-self: center; color: var(--muted); flex: 0 0 auto; }
+
+.dept-block { margin-bottom: 14px; }
+.dept-block > summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  user-select: none;
+}
+.dept-block > summary::-webkit-details-marker { display: none; }
+
+.dept-color {
+  width: 10px;
+  height: 28px;
+  border-radius: 3px;
+  flex: 0 0 10px;
+}
+
+.dept-name { font-weight: 600; }
+.dept-meta { color: var(--muted); font-size: 12px; }
+.dept-summary-right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px 16px;
+}
+
+.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.field label { font-size: 12px; color: var(--muted); font-weight: 600; }
+.field .help { font-size: 11px; color: var(--muted); }
+.field input, .field select, .field textarea { width: 100%; }
+.field.check { flex-direction: row; align-items: center; gap: 8px; }
+.field.check input { width: auto; }
+
+.switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 36px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--border-strong);
+  transition: background .15s ease;
+  border: 0;
+  flex: 0 0 36px;
+}
+
+.switch::after {
+  content: "";
+  position: absolute;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  transition: left .15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .2);
+}
+
+.switch.on { background: var(--accent); }
+.switch.on::after { left: 18px; }
+
+.person-row {
+  display: grid;
+  grid-template-columns: minmax(130px, 1.2fr) minmax(90px, .7fr) 90px 90px 1.4fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+}
+
+.person-row:first-of-type { border-top: 0; }
+.person-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.person-note { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.count-line { color: var(--muted); font-size: 12px; }
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 32, .42);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 44px 16px;
+  z-index: 50;
+  overflow: auto;
+}
+
+.modal {
+  width: min(920px, 100%);
+  background: var(--panel);
+  border-radius: var(--radius);
+  box-shadow: 0 24px 80px rgba(15, 23, 32, .25);
+  border: 1px solid var(--border);
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-head h2 { margin: 0; font-size: 17px; }
+.modal-body { padding: 18px; }
+.modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 13px 18px;
+  border-top: 1px solid var(--border);
+}
+
+.slot-list { display: flex; flex-direction: column; gap: 10px; }
+.slot-row {
+  display: grid;
+  grid-template-columns: 150px minmax(150px, 1fr) minmax(150px, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel-soft);
+}
+
+.slot-index {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.lock-row { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
+
+.warn-box {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--amber-soft);
+  color: var(--amber);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.warn-box svg { width: 16px; height: 16px; flex: 0 0 16px; margin-top: 2px; }
+.warn-box ul { margin: 0; padding-left: 18px; }
+
+.rule-note {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 0 6px 6px 0;
+  color: #155e58;
+  font-size: 13px;
+}
+
+.rule-note p { margin: 0 0 4px; }
+.rule-note ul { margin: 0; padding-left: 18px; }
+
+.notice-banner {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  border: 1px solid #eed7b8;
+  border-left: 4px solid var(--amber);
+  border-radius: 6px;
+  background: var(--amber-soft);
+  color: #7a4a12;
+  font-size: 13px;
+}
+
+.notice-banner svg { width: 17px; height: 17px; flex: 0 0 17px; margin-top: 2px; }
+.notice-banner p { margin: 0; line-height: 1.6; }
+
+.toast-root {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 80;
+}
+
+.toast {
+  min-width: 220px;
+  max-width: 360px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: #17222e;
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .22);
+  font-size: 13px;
+  animation: toastIn .18s ease;
+}
+
+.toast.ok { background: #0f766e; }
+.toast.warn { background: #b45309; }
+.toast.error { background: #be123c; }
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+.mini-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: #edf1f4;
+  overflow: hidden;
+}
+
+.mini-bar > span { display: block; height: 100%; border-radius: 999px; }
+
+@media (max-width: 980px) {
+  .app-shell { flex-direction: column; }
+  .sidebar {
+    width: 100%;
+    flex: 0 0 auto;
+    flex-direction: row;
+    align-items: center;
+    padding: 8px 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .nav { flex-direction: row; overflow-x: auto; flex: 1; }
+  .nav-item { width: auto; white-space: nowrap; justify-content: center; min-height: 36px; }
+  .sidebar-foot { display: none; }
+  .grid-2 { grid-template-columns: 1fr; }
+  .topbar { flex-wrap: wrap; height: auto; padding: 10px 14px; }
+  .person-row { grid-template-columns: 1fr 1fr; }
+  .slot-row { grid-template-columns: 40px 1fr; }
+}
+
+@media (max-width: 640px) {
+  .main { padding: 14px 12px 32px; }
+  .topbar-actions .btn span { display: none; }
+  .brand-sub { display: none; }
+}
+
+</style>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">轮</span>
+      <div>
+        <strong>面试官轮值排班台</strong>
+        <span class="brand-sub">外聘区域总监竞聘排班</span>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <span id="serverStatus" class="server-status">本地模式</span>
+      <input id="globalSearch" class="input" style="width:220px" placeholder="搜索竞聘人员 / 面试官 / 中心">
+      <button class="btn primary" data-action="add-session"><i data-lucide="plus"></i>新增竞聘</button>
+    </div>
+  </header>
+
+  <div class="app-shell">
+    <aside class="sidebar">
+      <nav class="nav">
+        <button class="nav-item active" data-view="dashboard">
+          <i data-lucide="layout-dashboard"></i><span>工作台</span>
+        </button>
+        <button class="nav-item" data-view="calendar">
+          <i data-lucide="calendar-days"></i><span>排班日历</span>
+        </button>
+        <button class="nav-item" data-view="roster">
+          <i data-lucide="users"></i><span>面试官</span>
+        </button>
+        <button class="nav-item" data-view="records">
+          <i data-lucide="clipboard-list"></i><span>竞聘记录</span>
+        </button>
+      </nav>
+      <div class="sidebar-foot">
+        <p>数据保存在当前浏览器。</p>
+      </div>
+    </aside>
+
+    <main class="main">
+      <section id="view-dashboard" class="view active"></section>
+      <section id="view-calendar" class="view"></section>
+      <section id="view-roster" class="view"></section>
+      <section id="view-records" class="view"></section>
+      <section id="view-auto" class="view"></section>
+    </main>
+  </div>
+
+  <div id="modalRoot"></div>
+  <div id="toastRoot" class="toast-root"></div>
+
+  <script>
+window.SEED_DATA = {
+  "version": 1,
+  "meta": {
+    "title": "外聘区域总监面试官轮值排班",
+    "source": "外聘区域总监面试官轮班表（竞聘）.xlsx",
+    "generatedAt": "2026-08-17T22:44:57"
+  },
+  "settings": {
+    "headsPerSession": 2,
+    "assistantsPerSession": 3,
+    "interviewersPerSession": 5,
+    "maxConsecutivePerPerson": 1,
+    "hostPerSession": 1,
+    "organizerPerSession": 0,
+    "defaultMode": "腾讯会议",
+    "defaultTime": "14:00-14:40",
+    "weekdays": [
+      2,
+      4
+    ]
+  },
+  "departments": [
+    {
+      "id": "zongban",
+      "name": "总裁办",
+      "shortName": "总裁办",
+      "order": 0,
+      "frequency": 1,
+      "color": "#2563eb",
+      "note": "",
+      "people": [
+        {
+          "id": "zongban_郑凯年",
+          "name": "郑凯年",
+          "role": "中心负责人",
+          "enabled": true,
+          "note": "",
+          "maxConsecutive": 1,
+          "unavailable": []
+        },
+        {
+          "id": "zongban_郑雁璇",
+          "name": "郑雁璇",
+          "role": "助理",
+          "enabled": true,
+          "note": "",
+          "maxConsecutive": 1,
+          "unavailable": []
+        }
+      ]
+    },
+    {
+      "id": "renfa",
+      "name": "人力发展中心",
+      "shortName": "人发",
+      "order": 1,
+      "frequency": 1,
+      "color": "#0f766e",
+      "note": "",
+      "people": [
+        {
+          "id": "renfa_冯文玲",
+          "name": "冯文玲",
+          "role": "助理",
+          "enabled": true,
+          "note": "",
+          "maxConsecutive": 1,
+          "unavailable": []
+        },
+        {
+          "id": "renfa_杨敏",
+          "name": "杨敏",
+          "role": "助理",
+          "enabled": true,
+          "note": "",
+          "maxConsecutive": 1,
+          "unavailable": []
+        }
+      ]
+    },
+    {
+      "id": "fawu",
+      "name": "法律服务中心",
+      "shortName": "法务",
+      "order": 2,
+      "frequency": 1,
+      "color": "#7c3aed",
+      "note": "",
+      "people": [
+        {
+          "id": "fawu_万恩芹",
+          "name": "万恩芹",
+          "role": "中心负责人",
+          "enabled": true,
+          "note": "",
+          "maxConsecutive": 1,
+          "unavailable": []
+        },
+        {
+          "id": "fawu_金灵",
+          "name": "金灵",
+          "role": "助理",
+          "enabled": false,
+          "note": "未在当前名单中，可自行启用",
+          "maxConsecutive": 1,
+          "unavailable": []
+        }
+      ]
+    },
+    {
+      "id": "pinpai",
+      "name": "品牌公关中心",
+      "shortName": "品牌",
+      "order": 3,
+      "frequency": 1,
+      "color": "#b45309",
+      "note": "",
+      "people": [
+        {
+          "id": "pinpai_唐俪瑕",
+          "name": "唐俪瑕",
+          "role": "中心负责人",
+          "enabled": true,
+          "note": "",
+          "maxConsecutive": 1,
+          "unavailable": []
+        },
+        {
+          "id": "pinpai_陈金月",
+          "name": "陈金月",
+          "role": "助理",
+          "enabled": false,
+          "note": "未在当前名单中，可自行启用",
+          "maxConsecutive": 1,
+          "unavailable": []
+        }
+      ]
+    },
+    {
+      "id": "yewu",
+      "name": "业务运营中心",
+      "shortName": "业务",
+      "order": 4,
+      "frequency": 1,
+      "color": "#be123c",
+      "note": "",
+      "people": [
+        {
+          "id": "yewu_胡雪琴",
+          "name": "胡雪琴",
+          "role": "中心负责人",
+          "enabled": true,
+          "note": "",
+          "maxConsecutive": 1,
+          "unavailable": []
+        },
+        {
+          "id": "yewu_郑丽芬",
+          "name": "郑丽芬",
+          "role": "助理",
+          "enabled": true,
+          "note": "",
+          "maxConsecutive": 1,
+          "unavailable": []
+        }
+      ]
+    },
+    {
+      "id": "renzi",
+      "name": "人力资源中心",
+      "shortName": "人资",
+      "order": 5,
+      "frequency": 1,
+      "color": "#4f46e5",
+      "note": "",
+      "people": [
+        {
+          "id": "renzi_杨彦",
+          "name": "杨彦",
+          "role": "中心负责人",
+          "enabled": true,
+          "note": "",
+          "maxConsecutive": 1,
+          "unavailable": []
+        },
+        {
+          "id": "renzi_廖思琪",
+          "name": "廖思琪",
+          "role": "助理",
+          "enabled": true,
+          "note": "",
+          "maxConsecutive": 1,
+          "unavailable": []
+        }
+      ]
+    },
+    {
+      "id": "zichan",
+      "name": "资产管理中心",
+      "shortName": "资产",
+      "order": 6,
+      "frequency": 2,
+      "color": "#0d9488",
+      "note": "",
+      "people": [
+        {
+          "id": "zichan_罗立平",
+          "name": "罗立平",
+          "role": "中心负责人",
+          "enabled": false,
+          "note": "罗总暂时不轮",
+          "maxConsecutive": 1,
+          "unavailable": []
+        },
+        {
+          "id": "zichan_童忠庆",
+          "name": "童忠庆",
+          "role": "助理",
+          "enabled": false,
+          "note": "休产检",
+          "maxConsecutive": 1,
+          "unavailable": []
+        }
+      ]
+    },
+    {
+      "id": "jicai",
+      "name": "计划财务中心",
+      "shortName": "计财",
+      "order": 7,
+      "frequency": 1,
+      "color": "#d97706",
+      "note": "",
+      "people": [
+        {
+          "id": "jicai_胡文我",
+          "name": "胡文我",
+          "role": "中心负责人",
+          "enabled": true,
+          "note": "",
+          "maxConsecutive": 1,
+          "unavailable": []
+        },
+        {
+          "id": "jicai_付佳",
+          "name": "付佳",
+          "role": "助理",
+          "enabled": true,
+          "note": "",
+          "maxConsecutive": 1,
+          "unavailable": []
+        },
+        {
+          "id": "jicai_李小君",
+          "name": "李小君",
+          "role": "助理",
+          "enabled": true,
+          "note": "线上竞聘优先安排",
+          "maxConsecutive": 1,
+          "unavailable": []
+        },
+        {
+          "id": "jicai_赵艺媛",
+          "name": "赵艺媛",
+          "role": "中心负责人",
+          "enabled": true,
+          "note": "",
+          "maxConsecutive": 1,
+          "unavailable": []
+        },
+        {
+          "id": "jicai_张丽华",
+          "name": "张丽华",
+          "role": "助理",
+          "enabled": true,
+          "note": "",
+          "maxConsecutive": 1,
+          "unavailable": []
+        }
+      ]
+    },
+    {
+      "id": "pinkong",
+      "name": "品质管控中心",
+      "shortName": "品控",
+      "order": 8,
+      "frequency": 1,
+      "color": "#db2777",
+      "note": "",
+      "people": [
+        {
+          "id": "pinkong_王祝青",
+          "name": "王祝青",
+          "role": "中心负责人",
+          "enabled": true,
+          "note": "",
+          "maxConsecutive": 1,
+          "unavailable": []
+        },
+        {
+          "id": "pinkong_邢冬悦",
+          "name": "邢冬悦",
+          "role": "助理",
+          "enabled": false,
+          "note": "未在当前名单中，可自行启用",
+          "maxConsecutive": 1,
+          "unavailable": []
+        }
+      ]
+    },
+    {
+      "id": "gaojixiao",
+      "name": "高绩效发展中心",
+      "shortName": "高绩效",
+      "order": 9,
+      "frequency": 1,
+      "color": "#059669",
+      "note": "",
+      "people": [
+        {
+          "id": "gaojixiao_禹巍巍",
+          "name": "禹巍巍",
+          "role": "中心负责人",
+          "enabled": true,
+          "note": "精英会前半月不安排，后面连续安排多场",
+          "maxConsecutive": 1,
+          "unavailable": []
+        },
+        {
+          "id": "gaojixiao_庄思弘",
+          "name": "庄思弘",
+          "role": "助理",
+          "enabled": true,
+          "note": "精英会前半月不安排，后面连续安排多场",
+          "maxConsecutive": 1,
+          "unavailable": []
+        }
+      ]
+    },
+    {
+      "id": "shunlian",
+      "name": "顺联担保",
+      "shortName": "顺联",
+      "order": 10,
+      "frequency": 2,
+      "color": "#1d4ed8",
+      "note": "",
+      "people": [
+        {
+          "id": "shunlian_甘虹",
+          "name": "甘虹",
+          "role": "中心负责人",
+          "enabled": true,
+          "note": "",
+          "maxConsecutive": 1,
+          "unavailable": []
+        }
+      ]
+    }
+  ],
+  "hosts": [
+    {
+      "id": "host_sj",
+      "name": "连思嘉",
+      "enabled": true,
+      "note": "主持人",
+      "maxConsecutive": 1,
+      "unavailable": []
+    },
+    {
+      "id": "host_pp",
+      "name": "彭魁博",
+      "enabled": true,
+      "note": "主持人",
+      "maxConsecutive": 1,
+      "unavailable": []
+    },
+    {
+      "id": "host_yh",
+      "name": "和雨涵",
+      "enabled": true,
+      "note": "主持人",
+      "maxConsecutive": 1,
+      "unavailable": []
+    },
+    {
+      "id": "host_jj",
+      "name": "陆俊杰",
+      "enabled": true,
+      "note": "主持人",
+      "maxConsecutive": 1,
+      "unavailable": []
+    },
+    {
+      "id": "host_sm",
+      "name": "刘思铭",
+      "enabled": true,
+      "note": "主持人",
+      "maxConsecutive": 1,
+      "unavailable": []
+    }
+  ],
+  "organizers": [],
+  "sessions": [
+    {
+      "id": "hist_001",
+      "date": "2026-01-20",
+      "time": "14:00-15:00",
+      "mode": "腾讯会议",
+      "candidates": "李功镇大区外聘区域总监【周丘岳】",
+      "status": "已开展",
+      "hostName": "美娜",
+      "hostId": null,
+      "organizerId": null,
+      "note": "",
+      "interviewers": [
+        {
+          "slot": 0,
+          "deptId": "jicai",
+          "personId": "jicai_李小君",
+          "locked": true
+        },
+        {
+          "slot": 1,
+          "deptId": "zongban",
+          "personId": "zongban_郑雁璇",
+          "locked": true
+        },
+        {
+          "slot": 2,
+          "deptId": "renfa",
+          "personId": "renfa_冯文玲",
+          "locked": true
+        },
+        {
+          "slot": 3,
+          "deptId": "pinpai",
+          "personId": "pinpai_陈金月",
+          "locked": true
+        },
+        {
+          "slot": 4,
+          "deptId": "renzi",
+          "personId": "renzi_廖思琪",
+          "locked": true
+        }
+      ]
+    },
+    {
+      "id": "hist_002",
+      "date": "2026-02-26",
+      "time": "14:00-15:00",
+      "mode": "1501会议室",
+      "candidates": "孟凡振大区外聘区域总监【陈业锋】",
+      "status": "已开展",
+      "hostName": "刘思铭",
+      "hostId": null,
+      "organizerId": null,
+      "note": "",
+      "interviewers": [
+        {
+          "slot": 0,
+          "deptId": "gaojixiao",
+          "personId": "gaojixiao_禹巍巍",
+          "locked": true
+        },
+        {
+          "slot": 1,
+          "deptId": "pinkong",
+          "personId": "pinkong_王祝青",
+          "locked": true
+        },
+        {
+          "slot": 2,
+          "deptId": "fawu",
+          "personId": "fawu_万恩芹",
+          "locked": true
+        },
+        {
+          "slot": 3,
+          "deptId": "jicai",
+          "personId": "jicai_张丽华",
+          "locked": true
+        },
+        {
+          "slot": 4,
+          "deptId": "yewu",
+          "personId": "yewu_胡雪琴",
+          "locked": true
+        }
+      ]
+    },
+    {
+      "id": "hist_003",
+      "date": "2026-03-17",
+      "time": "14:00-15:00",
+      "mode": "1501会议室",
+      "candidates": "贺玲大区外聘区域总监【张奕萱】",
+      "status": "已开展",
+      "hostName": "和雨涵",
+      "hostId": null,
+      "organizerId": null,
+      "note": "",
+      "interviewers": [
+        {
+          "slot": 0,
+          "deptId": "renzi",
+          "personId": "renzi_廖思琪",
+          "locked": true
+        },
+        {
+          "slot": 1,
+          "deptId": "zichan",
+          "personId": "zichan_童忠庆",
+          "locked": true
+        },
+        {
+          "slot": 2,
+          "deptId": "pinpai",
+          "personId": "pinpai_唐俪瑕",
+          "locked": true
+        },
+        {
+          "slot": 3,
+          "deptId": "shunlian",
+          "personId": "shunlian_甘虹",
+          "locked": true
+        },
+        {
+          "slot": 4,
+          "deptId": "zongban",
+          "personId": "zongban_郑雁璇",
+          "locked": true
+        }
+      ]
+    },
+    {
+      "id": "hist_004",
+      "date": "2026-04-09",
+      "time": "14:00-15:00",
+      "mode": "1501会议室",
+      "candidates": "李莉大区外聘区域总监【陈子千】",
+      "status": "已开展",
+      "hostName": "美娜",
+      "hostId": null,
+      "organizerId": null,
+      "note": "因资产、品控、顺联、法务、品牌两轮排一次，故本次人资连续两次（结合本次负责人少），下场不排",
+      "interviewers": [
+        {
+          "slot": 0,
+          "deptId": "pinkong",
+          "personId": "pinkong_王祝青",
+          "locked": true
+        },
+        {
+          "slot": 1,
+          "deptId": "renfa",
+          "personId": "renfa_杨敏",
+          "locked": true
+        },
+        {
+          "slot": 2,
+          "deptId": "renzi",
+          "personId": "renzi_杨彦",
+          "locked": true
+        },
+        {
+          "slot": 3,
+          "deptId": "jicai",
+          "personId": "jicai_张丽华",
+          "locked": true
+        },
+        {
+          "slot": 4,
+          "deptId": "yewu",
+          "personId": "yewu_郑丽芬",
+          "locked": true
+        }
+      ]
+    },
+    {
+      "id": "hist_005",
+      "date": "2026-04-16",
+      "time": "14:00-15:00",
+      "mode": "腾讯会议",
+      "candidates": "李功镇大区外聘区域总监【谭健炜】",
+      "status": "已开展",
+      "hostName": "刘思铭",
+      "hostId": null,
+      "organizerId": null,
+      "note": "6.23敏敏参加内聘营销副总裁助理竞聘",
+      "interviewers": [
+        {
+          "slot": 0,
+          "deptId": "gaojixiao",
+          "personId": "gaojixiao_禹巍巍",
+          "locked": true
+        },
+        {
+          "slot": 1,
+          "deptId": "jicai",
+          "personId": "jicai_李小君",
+          "locked": true
+        },
+        {
+          "slot": 2,
+          "deptId": "zongban",
+          "personId": "zongban_郑凯年",
+          "locked": true
+        },
+        {
+          "slot": 3,
+          "deptId": "renfa",
+          "personId": "renfa_冯文玲",
+          "locked": true
+        },
+        {
+          "slot": 4,
+          "deptId": "pinpai",
+          "personId": "pinpai_唐俪瑕",
+          "locked": true
+        }
+      ]
+    },
+    {
+      "id": "hist_006",
+      "date": "2026-05-19",
+      "time": "14:00-15:00",
+      "mode": "腾讯会议",
+      "candidates": "李功镇大区外聘区域总监【黄文锋-】",
+      "status": "已开展",
+      "hostName": "和雨涵",
+      "hostId": null,
+      "organizerId": null,
+      "note": "",
+      "interviewers": [
+        {
+          "slot": 0,
+          "deptId": "jicai",
+          "personId": "jicai_李小君",
+          "locked": true
+        },
+        {
+          "slot": 1,
+          "deptId": "renzi",
+          "personId": "renzi_廖思琪",
+          "locked": true
+        },
+        {
+          "slot": 2,
+          "deptId": "yewu",
+          "personId": "yewu_郑丽芬",
+          "locked": true
+        },
+        {
+          "slot": 3,
+          "deptId": "shunlian",
+          "personId": "shunlian_甘虹",
+          "locked": true
+        },
+        {
+          "slot": 4,
+          "deptId": "zichan",
+          "personId": "zichan_童忠庆",
+          "locked": true
+        }
+      ]
+    },
+    {
+      "id": "hist_007",
+      "date": "2026-06-30",
+      "time": "14:00-14:40",
+      "mode": "腾讯会议",
+      "candidates": "李功镇大区外聘区域总监【谭皓】",
+      "status": "已开展",
+      "hostName": "美娜",
+      "hostId": null,
+      "organizerId": null,
+      "note": "",
+      "interviewers": [
+        {
+          "slot": 0,
+          "deptId": "yewu",
+          "personId": "yewu_郑丽芬",
+          "locked": true
+        },
+        {
+          "slot": 1,
+          "deptId": "zichan",
+          "personId": "zichan_童忠庆",
+          "locked": true
+        },
+        {
+          "slot": 2,
+          "deptId": "zongban",
+          "personId": "zongban_郑雁璇",
+          "locked": true
+        },
+        {
+          "slot": 3,
+          "deptId": "renfa",
+          "personId": "renfa_杨敏",
+          "locked": true
+        },
+        {
+          "slot": 4,
+          "deptId": "renzi",
+          "personId": "renzi_廖思琪",
+          "locked": true
+        }
+      ]
+    },
+    {
+      "id": "hist_008",
+      "date": "2026-08-11",
+      "time": "14:00-14:40",
+      "mode": "腾讯会议",
+      "candidates": "李功镇大区外聘区域总监【何东平】",
+      "status": "已开展",
+      "hostName": "陆俊杰",
+      "hostId": null,
+      "organizerId": null,
+      "note": "",
+      "interviewers": [
+        {
+          "slot": 0,
+          "deptId": "jicai",
+          "personId": "jicai_赵艺媛",
+          "locked": true
+        },
+        {
+          "slot": 1,
+          "deptId": "yewu",
+          "personId": "yewu_胡雪琴",
+          "locked": true
+        },
+        {
+          "slot": 2,
+          "deptId": "pinpai",
+          "personId": "pinpai_唐俪瑕",
+          "locked": true
+        },
+        {
+          "slot": 3,
+          "deptId": "fawu",
+          "personId": "fawu_万恩芹",
+          "locked": true
+        },
+        {
+          "slot": 4,
+          "deptId": "renfa",
+          "personId": "renfa_冯文玲",
+          "locked": true
+        }
+      ]
+    },
+    {
+      "id": "hist_009",
+      "date": "2026-08-20",
+      "time": "14:00-14:40",
+      "mode": "腾讯会议",
+      "candidates": "李功镇大区外聘区域总监【王奉翔】",
+      "status": "待安排",
+      "hostName": "连思嘉",
+      "hostId": null,
+      "organizerId": null,
+      "note": "",
+      "interviewers": [
+        {
+          "slot": 0,
+          "deptId": "pinkong",
+          "personId": "pinkong_王祝青",
+          "locked": true
+        },
+        {
+          "slot": 1,
+          "deptId": "jicai",
+          "personId": "jicai_李小君",
+          "locked": true
+        },
+        {
+          "slot": 2,
+          "deptId": "shunlian",
+          "personId": "shunlian_甘虹",
+          "locked": true
+        },
+        {
+          "slot": 3,
+          "deptId": "renzi",
+          "personId": "renzi_廖思琪",
+          "locked": true
+        },
+        {
+          "slot": 4,
+          "deptId": "zongban",
+          "personId": "zongban_郑雁璇",
+          "locked": true
+        }
+      ]
+    }
+  ],
+  "cursors": {
+    "deptIndex": 1,
+    "headIndex": 0,
+    "assistantIndex": 1,
+    "deptPassCounts": {
+      "zongban": 5,
+      "renfa": 5,
+      "fawu": 2,
+      "pinpai": 4,
+      "yewu": 5,
+      "renzi": 6,
+      "zichan": 6,
+      "jicai": 7,
+      "pinkong": 3,
+      "gaojixiao": 2,
+      "shunlian": 6
+    },
+    "hostIndex": 1,
+    "organizerIndex": 0
+  }
+};
+
+</script>
+  <script>
+(() => {
+  "use strict";
+
+  const STORAGE_KEY = "interviewer-scheduler-state-v4";
+  let state = null;
+  let currentView = "dashboard";
+  let openDeptIds = new Set();
+  let scheduleQuery = "";
+  let scheduleStatus = "all";
+  let selectedSessionId = null;
+  let draftSession = null;
+  let draftHostAdvanced = false;
+  let draftCursorSnapshot = null;
+  let calendarWeekStart = null;
+  let calendarView = "week";
+  let calendarFilter = "all";
+  let recordsFilter = "all";
+  let serverMode = false;
+  let serverSaveTimer = null;
+
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+  function deepClone(value) {
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  function uid(prefix) {
+    return (prefix || "id") + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+
+  function esc(value) {
+    return String(value ?? "").replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    }[c]));
+  }
+
+  function pad(n) {
+    return String(n).padStart(2, "0");
+  }
+
+  function parseDate(value) {
+    if (!value) return null;
+    const m = String(value).match(/^(\d{4})[-/年](\d{1,2})[-/月](\d{1,2})日?/);
+    if (!m) return null;
+    const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function dateKey(date) {
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  }
+
+  function todayIso() {
+    return dateKey(new Date());
+  }
+
+  function fmtDateCn(value) {
+    const d = parseDate(value);
+    return d ? `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日` : (value || "-");
+  }
+
+  function fmtDateShort(value) {
+    const d = parseDate(value);
+    return d ? `${d.getMonth() + 1}月${d.getDate()}日` : (value || "-");
+  }
+
+  function fmtDateShortWeekday(value) {
+    const d = parseDate(value);
+    return d ? `${d.getMonth() + 1}月${d.getDate()}日（周${"日一二三四五六"[d.getDay()]}）` : (value || "-");
+  }
+
+  function addDays(value, days) {
+    const d = parseDate(value);
+    if (!d) return todayIso();
+    d.setDate(d.getDate() + days);
+    return dateKey(d);
+  }
+
+  function orderedDepartments() {
+    return [...state.departments].sort((a, b) => (a.order || 0) - (b.order || 0));
+  }
+
+  function findDept(id) {
+    return state.departments.find((d) => d.id === id) || null;
+  }
+
+  function findPerson(id) {
+    for (const dept of state.departments) {
+      const p = dept.people.find((x) => x.id === id);
+      if (p) return p;
+    }
+    return null;
+  }
+
+  function findHost(id) {
+    return state.hosts.find((h) => h.id === id) || null;
+  }
+
+  function findOrganizer(id) {
+    return state.organizers.find((o) => o.id === id) || null;
+  }
+
+  function sortSessions(list) {
+    return [...list].sort((a, b) => {
+      const da = parseDate(a.date);
+      const db = parseDate(b.date);
+      if (da && db && da.getTime() !== db.getTime()) return da.getTime() - db.getTime();
+      return (a.time || "").localeCompare(b.time || "");
+    });
+  }
+
+  function sortSessionsDesc(list) {
+    return [...list].sort((a, b) => {
+      const da = parseDate(a.date);
+      const db = parseDate(b.date);
+      if (da && db && da.getTime() !== db.getTime()) return db.getTime() - da.getTime();
+      return (b.time || "").localeCompare(a.time || "");
+    });
+  }
+
+  function sessionIsFull(session) {
+    const need = Math.max(1, state.settings.interviewersPerSession || 5);
+    return (session.interviewers || []).filter((iv) => iv.personId).length >= need;
+  }
+
+  function sessionIsPassed(session) {
+    const d = parseDate(session.date);
+    if (!d) return false;
+    const today = new Date();
+    const sessionDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    if (sessionDay < todayDay) return true;
+    if (sessionDay > todayDay) return false;
+    const endPart = (session.time || "").split("-")[1] || "";
+    const match = endPart.trim().match(/^(\d{1,2}):(\d{2})$/);
+    if (!match) return false;
+    const endHour = Number(match[1]);
+    const endMinute = Number(match[2]);
+    return today.getHours() > endHour || (today.getHours() === endHour && today.getMinutes() >= endMinute);
+  }
+
+  function markPassedSessions() {
+    let changed = false;
+    for (const s of state.sessions) {
+      if (s.status === "待安排" && sessionIsPassed(s)) {
+        s.status = "已开展";
+        changed = true;
+      }
+    }
+    if (changed) saveState();
+    return changed;
+  }
+
+  function startOfWeekIso(dateValue) {
+    const d = parseDate(dateValue || todayIso());
+    if (!d) return todayIso();
+    const day = d.getDay();
+    d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
+    return dateKey(d);
+  }
+
+  function sessionHasPausedPerson(session) {
+    return (session.interviewers || []).some((iv) => {
+      const p = findPerson(iv.personId);
+      return p && !p.enabled;
+    });
+  }
+
+  function sessionProgress(session) {
+    if (session.status === "已取消") return { label: "已取消", tone: "cancel" };
+    if (session.status === "已开展") return { label: "已完成", tone: "done" };
+    if (sessionHasPausedPerson(session)) return { label: "异常", tone: "error" };
+    const full = sessionIsFull(session) && Boolean(hostDisplayName(session));
+    if (!full) return { label: "待确认", tone: "pending" };
+    if (!session.notified) return { label: "待通知", tone: "notice" };
+    return { label: "已确认", tone: "confirmed" };
+  }
+
+  function currentRotationInfo() {
+    const headDepts = orderedDepartments().filter((d) => d.people.some((p) => p.enabled && p.role === "中心负责人"));
+    const assistantDepts = orderedDepartments().filter((d) => d.people.some((p) => p.enabled && p.role === "助理"));
+    const headIndex = (state.cursors.headIndex || 0) % Math.max(1, headDepts.length);
+    const assistantIndex = (state.cursors.assistantIndex || 0) % Math.max(1, assistantDepts.length);
+    const headDept = headDepts[headIndex] || null;
+    const nextHeadDept = headDepts[(headIndex + 1) % Math.max(1, headDepts.length)] || null;
+    const assistantDept = assistantDepts[assistantIndex] || null;
+    const probe = { date: todayIso(), mode: "腾讯会议", candidates: "" };
+    const currentPerson = headDept ? pickPersonForDeptRole(headDept, probe, new Set(), "head") : null;
+    const nextPerson = nextHeadDept ? pickPersonForDeptRole(nextHeadDept, probe, new Set(), "head") : null;
+    const currentAssistant = assistantDept ? pickPersonForDeptRole(assistantDept, probe, new Set(), "assistant") : null;
+    return { headDepts, headDept, currentPerson, nextHeadDept, nextPerson, assistantDept, currentAssistant, headIndex, assistantIndex };
+  }
+
+  function todoItems() {
+    const items = [];
+    const sessions = sortSessions(state.sessions.filter((s) => s.status !== "已取消"));
+    const byTime = new Map();
+    for (const s of sessions) {
+      const key = `${s.date}|${s.time}`;
+      if (!byTime.has(key)) byTime.set(key, []);
+      byTime.get(key).push(s);
+    }
+    for (const s of sessions) {
+      const progress = sessionProgress(s);
+      if (!sessionIsFull(s)) items.push({ type: "interviewer", text: `${fmtDateShort(s.date)} ${s.time || ""} 场次缺少面试官`, session: s });
+      if (!hostDisplayName(s)) items.push({ type: "host", text: `${fmtDateShort(s.date)} ${s.time || ""} 场次缺少主持人`, session: s });
+      if (progress.label === "待通知") items.push({ type: "notice", text: `${fmtDateShort(s.date)} ${s.time || ""} 尚未发送通知`, session: s });
+      if (sessionHasPausedPerson(s)) items.push({ type: "paused", text: `${fmtDateShort(s.date)} 暂停中的面试官被安排`, session: s });
+    }
+    for (const list of byTime.values()) {
+      if (list.length > 1) {
+        for (const s of list) items.push({ type: "conflict", text: `${fmtDateShort(s.date)} ${s.time || ""} 存在时间冲突`, session: s });
+      }
+    }
+    const seen = new Set();
+    return items.filter((item) => {
+      const key = `${item.type}|${item.session.id}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).sort((a, b) => (parseDate(a.session.date) || 0) - (parseDate(b.session.date) || 0));
+  }
+
+  function processTodos() {
+    const items = [];
+    const sessions = sortSessions(state.sessions.filter((s) => s.status === "待安排" && !sessionIsPassed(s)));
+    for (const s of sessions) {
+      if (!s.formConfirmed) items.push({ step: "form", label: "确认面试形式", session: s, action: "mark-form" });
+      if (!sessionIsFull(s)) items.push({ step: "schedule", label: "完成面试排班", session: s, action: "schedule" });
+      if (!s.ticketReady) items.push({ step: "ticket", label: "完善候选人工单", session: s, action: "mark-ticket" });
+      if (!s.notified) items.push({ step: "notice", label: "发送竞聘通知", session: s, action: "notice" });
+    }
+    return items;
+  }
+
+  function processDoneTodos() {
+    const items = [];
+    const sessions = sortSessions(state.sessions.filter((s) => s.status === "待安排" && !sessionIsPassed(s)));
+    for (const s of sessions) {
+      if (s.formConfirmed) items.push({ step: "form", label: "确认面试形式", session: s });
+      if (sessionIsFull(s)) items.push({ step: "schedule", label: "完成面试排班", session: s });
+      if (s.ticketReady) items.push({ step: "ticket", label: "完善候选人工单", session: s });
+      if (s.notified) items.push({ step: "notice", label: "发送竞聘通知", session: s });
+    }
+    return items;
+  }
+
+  function computeStats() {
+    const sessions = sortSessions(state.sessions.filter((s) => s.status !== "已取消" && (s.interviewers || []).length > 0));
+    const total = {};
+    const consec = {};
+    const lastDate = {};
+    const allIds = [];
+    for (const dept of state.departments) {
+      for (const p of dept.people) allIds.push(p.id);
+    }
+    for (const id of allIds) {
+      let run = 0;
+      for (const s of sessions) {
+        const has = s.interviewers.some((iv) => iv.personId === id);
+        run = has ? run + 1 : 0;
+        if (has) lastDate[id] = s.date;
+      }
+      consec[id] = run;
+      total[id] = sessions.reduce((n, s) => n + (s.interviewers.some((iv) => iv.personId === id) ? 1 : 0), 0);
+    }
+    return { total, consec, lastDate };
+  }
+
+  function rangeContains(range, dateStr) {
+    const d = parseDate(dateStr);
+    if (!d) return false;
+    const start = parseDate(range.start);
+    const end = parseDate(range.end);
+    if (start && d.getTime() < start.getTime()) return false;
+    if (end && d.getTime() > end.getTime()) return false;
+    return true;
+  }
+
+  function personAvailable(person, dateStr) {
+    if (!person.enabled) return false;
+    if (person.unavailable && person.unavailable.length) {
+      for (const range of person.unavailable) {
+        if (rangeContains(range, dateStr)) return false;
+      }
+    }
+    return true;
+  }
+
+  function hostAvailable(host, dateStr) {
+    if (!host.enabled) return false;
+    if (host.unavailable && host.unavailable.length) {
+      for (const range of host.unavailable) {
+        if (rangeContains(range, dateStr)) return false;
+      }
+    }
+    return true;
+  }
+
+  function countRole(poolName, id) {
+    const key = poolName === "hosts" ? "hostId" : "organizerId";
+    return state.sessions.filter((s) => s.status !== "已取消" && s[key] === id).length;
+  }
+
+  function consecutiveRoleCount(poolName, id) {
+    const key = poolName === "hosts" ? "hostId" : "organizerId";
+    const sessions = sortSessions(state.sessions.filter((s) => s.status !== "已取消" && s[key]));
+    let run = 0;
+    for (const s of sessions) {
+      run = s[key] === id ? run + 1 : 0;
+    }
+    return run;
+  }
+
+  function pickRole(poolName, session, excludedIds) {
+    const key = poolName === "hosts" ? "hostId" : "organizerId";
+    const pool = poolName === "hosts" ? state.hosts : state.organizers;
+    if (!pool.length) return null;
+    const cursorKey = poolName === "hosts" ? "hostIndex" : "organizerIndex";
+    const cursor = (state.cursors[cursorKey] || 0) % pool.length;
+    const candidates = pool.filter((h) => {
+      if (!hostAvailable(h, session.date)) return false;
+      if (excludedIds.has(h.id)) return false;
+      return true;
+    });
+    if (!candidates.length) return null;
+    candidates.sort((a, b) => {
+      const overA = consecutiveRoleCount(poolName, a.id) >= (a.maxConsecutive || 1) ? 1 : 0;
+      const overB = consecutiveRoleCount(poolName, b.id) >= (b.maxConsecutive || 1) ? 1 : 0;
+      if (overA !== overB) return overA - overB;
+      const ca = countRole(poolName, a.id);
+      const cb = countRole(poolName, b.id);
+      if (ca !== cb) return ca - cb;
+      const orderA = (pool.indexOf(a) - cursor + pool.length) % pool.length;
+      const orderB = (pool.indexOf(b) - cursor + pool.length) % pool.length;
+      return orderA - orderB;
+    });
+    const picked = candidates[0];
+    state.cursors[cursorKey] = (pool.indexOf(picked) + 1) % pool.length;
+    return picked;
+  }
+
+  function peekNextHost(session) {
+    const pool = state.hosts;
+    if (!pool.length) return null;
+    const cursor = (state.cursors.hostIndex || 0) % pool.length;
+    const candidates = pool.filter((h) => hostAvailable(h, session.date));
+    if (!candidates.length) return null;
+    candidates.sort((a, b) => {
+      const overA = consecutiveRoleCount("hosts", a.id) >= (a.maxConsecutive || 1) ? 1 : 0;
+      const overB = consecutiveRoleCount("hosts", b.id) >= (b.maxConsecutive || 1) ? 1 : 0;
+      if (overA !== overB) return overA - overB;
+      const ca = countRole("hosts", a.id);
+      const cb = countRole("hosts", b.id);
+      if (ca !== cb) return ca - cb;
+      const orderA = (pool.indexOf(a) - cursor + pool.length) % pool.length;
+      const orderB = (pool.indexOf(b) - cursor + pool.length) % pool.length;
+      return orderA - orderB;
+    });
+    return candidates[0];
+  }
+
+  function roleType(person) {
+    return person.role === "中心负责人" ? "head" : person.role === "助理" ? "assistant" : null;
+  }
+
+  function pickPersonForDeptRole(dept, session, excludedIds, wantedRole) {
+    const stats = computeStats();
+    const maxDefault = state.settings.maxConsecutivePerPerson || 1;
+    const candidates = dept.people.filter((p) => {
+      if (!personAvailable(p, session.date)) return false;
+      if (excludedIds.has(p.id)) return false;
+      if (wantedRole && roleType(p) !== wantedRole) return false;
+      return true;
+    });
+    if (!candidates.length) return null;
+    candidates.sort((a, b) => {
+      const online = (session.mode || "").includes("线上");
+      const onlineA = online && a.name === "李小君" ? 1 : 0;
+      const onlineB = online && b.name === "李小君" ? 1 : 0;
+      if (onlineA !== onlineB) return onlineB - onlineA;
+      const sa = stats.total[a.id] || 0;
+      const sb = stats.total[b.id] || 0;
+      const ca = stats.consec[a.id] || 0;
+      const cb = stats.consec[b.id] || 0;
+      const ma = a.maxConsecutive || maxDefault;
+      const mb = b.maxConsecutive || maxDefault;
+      const overA = ca >= ma ? 1 : 0;
+      const overB = cb >= mb ? 1 : 0;
+      if (overA !== overB) return overA - overB;
+      if (sa !== sb) return sa - sb;
+      const da = stats.lastDate[a.id] ? parseDate(stats.lastDate[a.id]).getTime() : -Infinity;
+      const db = stats.lastDate[b.id] ? parseDate(stats.lastDate[b.id]).getTime() : -Infinity;
+      if (da !== db) return da - db;
+      return dept.people.indexOf(a) - dept.people.indexOf(b);
+    });
+    return candidates[0];
+  }
+
+  function selectDepartmentsForSession(session, count, excludedDeptIds, excludedPersonIds, advance, warnings) {
+    const ordered = orderedDepartments();
+    const deptIndexMap = new Map(ordered.map((d, i) => [d.id, i]));
+    const excludedDeptSet = new Set(excludedDeptIds || []);
+    const excludedPersons = excludedPersonIds || new Set();
+    const stats = computeStats();
+    const selected = [];
+    const headQuota = state.settings.headsPerSession || 2;
+    const assistantQuota = state.settings.assistantsPerSession || 3;
+    const canSupply = (dept, role) => dept.people.some((p) => personAvailable(p, session.date) && roleType(p) === role);
+    const headDepts = ordered.filter((d) => !excludedDeptSet.has(d.id) && canSupply(d, "head"));
+    const assistantDepts = ordered.filter((d) => !excludedDeptSet.has(d.id) && canSupply(d, "assistant"));
+    let headIdx = (state.cursors.headIndex || 0) % Math.max(1, headDepts.length);
+    let assistantIdx = (state.cursors.assistantIndex || 0) % Math.max(1, assistantDepts.length);
+    const selectedDeptIds = new Set(excludedDeptSet);
+    const avoidPersons = new Set(excludedPersons);
+    const selectedPersonIds = new Set(excludedPersons);
+    const headSelectedIds = new Set();
+
+    function pickFromQueue(queue, startIdx, role, quota, allowHeadFallback) {
+      const picked = [];
+      let idx = startIdx;
+      let guard = 0;
+      const maxGuard = queue.length * 4 + 20;
+      while (picked.length < quota && guard < maxGuard) {
+        guard += 1;
+        if (!queue.length) break;
+        const dept = queue[idx % queue.length];
+        idx += 1;
+        if (selectedDeptIds.has(dept.id) && !(allowHeadFallback && headSelectedIds.has(dept.id))) continue;
+        const pass = state.cursors.deptPassCounts[dept.id] || 0;
+        const freq = Math.max(1, dept.frequency || 1);
+        if (pass % freq !== 0) {
+          if (advance) state.cursors.deptPassCounts[dept.id] = pass + 1;
+          continue;
+        }
+        const person = pickPersonForDeptRole(dept, session, avoidPersons, role);
+        if (person) {
+          const consec = stats.consec[person.id] || 0;
+          const limit = person.maxConsecutive || state.settings.maxConsecutivePerPerson || 1;
+          const hasAlternative = dept.people.some((p) =>
+            p.id !== person.id && personAvailable(p, session.date) && !avoidPersons.has(p.id) && roleType(p) === role
+          );
+          if (consec >= limit && !hasAlternative) {
+            if (advance) state.cursors.deptPassCounts[dept.id] = pass + 1;
+            if (warnings) warnings.push(`${person.name}（${dept.shortName}）已连续参与，本轮先跳过`);
+            continue;
+          }
+          picked.push({ dept, person, orderIndex: deptIndexMap.get(dept.id) });
+          selectedDeptIds.add(dept.id);
+          avoidPersons.add(person.id);
+          selectedPersonIds.add(person.id);
+          if (role === "head") headSelectedIds.add(dept.id);
+          if (advance) state.cursors.deptPassCounts[dept.id] = pass + 1;
+        } else {
+          if (advance) state.cursors.deptPassCounts[dept.id] = pass + 1;
+          if (warnings && !allowHeadFallback) warnings.push(`${dept.shortName || dept.name}当前没有可用的${role === "head" ? "中心负责人" : "助理"}，本轮顺延`);
+        }
+      }
+      return { picked, nextIndex: idx };
+    }
+
+    const headResult = pickFromQueue(headDepts, headIdx, "head", headQuota);
+    const assistantResult = pickFromQueue(assistantDepts, assistantIdx, "assistant", assistantQuota);
+    if (assistantResult.picked.length < assistantQuota) {
+      const missing = assistantQuota - assistantResult.picked.length;
+      const fallback = pickFromQueue(assistantDepts, assistantResult.nextIndex, "assistant", missing, true);
+      assistantResult.picked.push(...fallback.picked);
+      assistantResult.nextIndex = fallback.nextIndex;
+    }
+    state.cursors.headIndex = headResult.nextIndex;
+    state.cursors.assistantIndex = assistantResult.nextIndex;
+    selected.push(...headResult.picked, ...assistantResult.picked);
+    if (warnings) {
+      if (headResult.picked.length < headQuota) warnings.push(`还差 ${headQuota - headResult.picked.length} 位中心负责人`);
+      if (assistantResult.picked.length < assistantQuota) warnings.push(`还差 ${assistantQuota - assistantResult.picked.length} 位助理`);
+    }
+    return selected;
+  }
+
+  function fillSession(sessionOrId) {
+    const session = typeof sessionOrId === "string" ? state.sessions.find((s) => s.id === sessionOrId) : sessionOrId;
+    if (!session || session.status === "已取消") return { filled: 0, warnings: [] };
+    const lockedAll = (session.interviewers || []).filter((iv) => iv.locked);
+    const slots = Math.max(1, state.settings.interviewersPerSession || 5, lockedAll.length);
+    const existing = lockedAll.slice(0, slots);
+    const need = Math.max(0, slots - existing.length);
+    const warnings = [];
+    const lockedDepts = new Set(existing.map((iv) => iv.deptId).filter(Boolean));
+    const lockedPersons = new Set(existing.map((iv) => iv.personId).filter(Boolean));
+    let picked = [];
+    if (need > 0) {
+      picked = selectDepartmentsForSession(session, need, lockedDepts, lockedPersons, true, warnings);
+    }
+    const nextSlots = picked.map((item, i) => ({
+      slot: existing.length + i,
+      deptId: item.dept.id,
+      personId: item.person.id,
+      locked: false,
+    }));
+    for (let i = existing.length + picked.length; i < slots; i += 1) {
+      nextSlots.push({ slot: i, deptId: null, personId: null, locked: false });
+    }
+    session.interviewers = [...existing, ...nextSlots].sort((a, b) => a.slot - b.slot);
+
+    if (state.settings.hostPerSession) {
+      const used = new Set(session.interviewers.map((iv) => iv.personId).filter(Boolean));
+      if (session.hostName) {
+        const existingHost = state.hosts.find((h) => h.name === session.hostName);
+        if (existingHost) session.hostId = existingHost.id;
+      } else if (!session.hostId) {
+        const host = pickRole("hosts", session, used);
+        if (host) session.hostId = host.id;
+        else if (!session.hostId) warnings.push("主持人池无人可用，请补充主持人或调整不可用时间");
+      }
+    }
+    if (state.settings.organizerPerSession) {
+      const org = pickRole("organizers", session, new Set());
+      if (org) session.organizerId = org.id;
+      else if (!session.organizerId) warnings.push("组织实施人池无人可用，请补充人员");
+    }
+    return { filled: picked.length, warnings };
+  }
+
+  function fillUpcoming() {
+    const targets = sortSessions(state.sessions.filter((s) => s.status === "待安排"));
+    const allWarnings = [];
+    let filled = 0;
+    for (const s of targets) {
+      const result = fillSession(s.id);
+      filled += result.filled;
+      result.warnings.forEach((w) => allWarnings.push(`${fmtDateShort(s.date)} ${s.time || ""}：${w}`));
+    }
+    saveAndRender();
+    if (filled === 0 && allWarnings.length === 0) {
+      showToast("待开展场次都已有人选，无需重排", "ok");
+    } else {
+      showToast(`已补排 ${filled} 个名额`, allWarnings.length ? "warn" : "ok");
+    }
+    if (allWarnings.length) {
+      showToast(allWarnings[0], "warn");
+      console.warn(allWarnings);
+    }
+  }
+
+  function nextWeekdayDate(startIso, weekdays) {
+    const d = parseDate(startIso);
+    if (!d) return null;
+    const set = new Set((weekdays || [2, 4]).map(Number));
+    for (let i = 0; i < 8; i += 1) {
+      if (set.has(d.getDay())) return dateKey(d);
+      d.setDate(d.getDate() + 1);
+    }
+    return dateKey(d);
+  }
+
+  function generateSessions(count, startIso) {
+    const weekdays = (state.settings.weekdays || [2, 4]).map(Number);
+    let date = nextWeekdayDate(startIso || todayIso(), weekdays);
+    const existing = new Set(state.sessions.map((s) => s.date));
+    const created = [];
+    let attempts = 0;
+    while (created.length < count && attempts < count * 30 + 60) {
+      attempts += 1;
+      if (!date) break;
+      if (!existing.has(date)) {
+        const session = {
+          id: uid("s"),
+          date,
+          time: state.settings.defaultTime || "14:00-14:40",
+          mode: state.settings.defaultMode || "腾讯会议",
+          candidates: "",
+          status: "待安排",
+          hostId: null,
+          organizerId: null,
+          note: "",
+          interviewers: [],
+        };
+        state.sessions.push(session);
+        existing.add(date);
+        created.push(session);
+        fillSession(session.id);
+      }
+      date = addDays(date, 1);
+      date = nextWeekdayDate(date, weekdays);
+    }
+    saveAndRender();
+    showToast(`已生成并排好 ${created.length} 场`, "ok");
+    return created;
+  }
+
+  function clearAutoAssignments() {
+    let cleared = 0;
+    for (const s of state.sessions) {
+      if (s.status !== "待安排") continue;
+      const kept = (s.interviewers || []).filter((iv) => iv.locked);
+      cleared += s.interviewers.length - kept.length;
+      s.interviewers = kept;
+    }
+    saveAndRender();
+    showToast(`已清空 ${cleared} 个未锁定名额`, "ok");
+  }
+
+  function resetCursor() {
+    state.cursors.deptIndex = 0;
+    state.cursors.headIndex = 0;
+    state.cursors.assistantIndex = 0;
+    for (const d of state.departments) state.cursors.deptPassCounts[d.id] = 0;
+    state.cursors.hostIndex = 0;
+    state.cursors.organizerIndex = 0;
+    saveAndRender();
+    showToast("轮值指针已重置到第一位", "ok");
+  }
+
+  function skipCurrentRotation() {
+    const info = currentRotationInfo();
+    if (info.headDepts.length) state.cursors.headIndex = (info.headIndex + 1) % info.headDepts.length;
+    const assistantList = orderedDepartments().filter((d) => d.people.some((p) => p.enabled && p.role === "助理"));
+    if (assistantList.length) state.cursors.assistantIndex = (state.cursors.assistantIndex + 1) % assistantList.length;
+    saveAndRender();
+    showToast("已跳过本轮中心", "ok");
+  }
+
+  // ---------- storage ----------
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.departments && parsed.sessions) return normalizeState(parsed);
+      }
+    } catch (err) {
+      console.warn("读取本地数据失败", err);
+    }
+    return normalizeState(deepClone(window.SEED_DATA));
+  }
+
+  function normalizeState(input) {
+    const s = deepClone(input);
+    const hostRename = {
+      "思嘉": "连思嘉",
+      "彭彭": "彭魁博",
+      "雨涵": "和雨涵",
+      "俊杰": "陆俊杰",
+      "思铭": "刘思铭",
+      "刘思铭": "刘思铭",
+    };
+    s.settings = Object.assign({
+      headsPerSession: 2,
+      assistantsPerSession: 3,
+      interviewersPerSession: 5,
+      maxConsecutivePerPerson: 1,
+      hostPerSession: 1,
+      organizerPerSession: 1,
+      defaultMode: "腾讯会议",
+      defaultTime: "14:00-14:40",
+      weekdays: [2, 4],
+      lockPassword: "123456",
+    }, s.settings || {});
+    s.settings.headsPerSession = s.settings.headsPerSession == null ? 2 : s.settings.headsPerSession;
+    s.settings.assistantsPerSession = s.settings.assistantsPerSession == null ? 3 : s.settings.assistantsPerSession;
+    s.settings.interviewersPerSession = (s.settings.headsPerSession || 0) + (s.settings.assistantsPerSession || 0);
+    s.cursors = Object.assign({ deptIndex: 0, headIndex: 0, assistantIndex: 0, deptPassCounts: {}, hostIndex: 0, organizerIndex: 0 }, s.cursors || {});
+    s.cursors.deptPassCounts = s.cursors.deptPassCounts || {};
+    s.departments = (s.departments || []).map((d) => {
+      d.people = (d.people || []).map((p) => {
+        p.enabled = p.enabled !== false;
+        p.unavailable = p.unavailable || [];
+        p.maxConsecutive = Math.max(1, Math.min(10, Number(p.maxConsecutive) || 1));
+        return p;
+      });
+      return d;
+    });
+    s.hosts = (s.hosts || []).map((h) => ({
+      ...h,
+      name: hostRename[h.name] || h.name,
+    }));
+    const seenHosts = new Set();
+    s.hosts = s.hosts.filter((h) => {
+      if (seenHosts.has(h.name)) return false;
+      seenHosts.add(h.name);
+      return true;
+    });
+    s.hosts = s.hosts.map((h) => {
+      h.enabled = h.enabled !== false;
+      h.unavailable = h.unavailable || [];
+      h.maxConsecutive = Math.max(1, Math.min(10, Number(h.maxConsecutive) || 1));
+      return h;
+    });
+    s.organizers = (s.organizers || []).map((o) => {
+      o.enabled = o.enabled !== false;
+      o.unavailable = o.unavailable || [];
+      o.maxConsecutive = Math.max(1, Math.min(10, Number(o.maxConsecutive) || 1));
+      return o;
+    });
+    s.sessions = (s.sessions || []).map((x) => {
+      if (x.hostName) x.hostName = hostRename[x.hostName] || x.hostName;
+      x.interviewers = x.interviewers || [];
+      x.status = x.status || "待安排";
+      x.notified = x.notified === true;
+      x.formConfirmed = x.formConfirmed === true;
+      x.ticketReady = x.ticketReady === true;
+      x.locked = x.locked === true;
+      if (x.status === "已开展") {
+        x.notified = true;
+        x.formConfirmed = true;
+        x.ticketReady = true;
+      }
+      return x;
+    });
+    return s;
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      const el = $("#saveState");
+      if (el) {
+        el.textContent = "已保存";
+        el.style.color = "";
+      }
+    } catch (err) {
+      const el = $("#saveState");
+      if (el) {
+        el.textContent = "浏览器无法保存，请导出 JSON";
+        el.style.color = "var(--rose)";
+      }
+      console.warn("保存失败", err);
+    }
+    if (serverMode) {
+      clearTimeout(serverSaveTimer);
+      serverSaveTimer = setTimeout(postStateToServer, 250);
+    }
+  }
+
+  async function postStateToServer() {
+    try {
+      await fetch("/api/state", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(state),
+      });
+    } catch (err) {
+      console.warn("服务器保存失败", err);
+    }
+  }
+
+  function saveAndRender() {
+    saveState();
+    markPassedSessions();
+    renderCurrentView();
+  }
+
+  // ---------- UI helpers ----------
+
+  function showToast(message, type = "") {
+    const root = $("#toastRoot");
+    const el = document.createElement("div");
+    el.className = `toast ${type}`;
+    el.textContent = message;
+    root.appendChild(el);
+    setTimeout(() => {
+      el.style.opacity = "0";
+      el.style.transition = "opacity .3s ease";
+      setTimeout(() => el.remove(), 320);
+    }, 2600);
+  }
+
+  function openModal(htmlContent) {
+    const root = $("#modalRoot");
+    root.innerHTML = htmlContent;
+    if (window.lucide) window.lucide.createIcons(root);
+    return root;
+  }
+
+  function closeModal() {
+    $("#modalRoot").innerHTML = "";
+    draftSession = null;
+    draftHostAdvanced = false;
+    draftCursorSnapshot = null;
+    selectedSessionId = null;
+  }
+
+  function statusPill(status) {
+    const cls = status === "已开展" ? "done" : status === "已取消" ? "cancel" : "todo";
+    return `<span class="status-pill ${cls}">${status === "待安排" ? "待开展" : esc(status)}</span>`;
+  }
+
+  function progressPill(progress) {
+    return `<span class="status-pill ${progress.tone}">${esc(progress.label)}</span>`;
+  }
+
+  function personChips(session) {
+    const stats = computeStats();
+    const items = (session.interviewers || []).slice().sort((a, b) => a.slot - b.slot);
+    if (!items.length) return `<span class="chip missing">未排</span>`;
+    return `<span class="chips">${items.map((iv) => {
+      if (!iv.personId) return `<span class="chip missing">缺员</span>`;
+      const dept = findDept(iv.deptId);
+      const person = findPerson(iv.personId);
+      const name = person ? person.name : "未知";
+      const short = dept ? dept.shortName : "?";
+      const color = dept ? dept.color : "#64748b";
+      const consec = stats.consec[iv.personId] || 0;
+      const limit = person ? (person.maxConsecutive || 1) : 1;
+      const risk = consec > 1 && consec >= limit;
+      const title = `${name} · ${dept ? dept.name : ""} · 累计${stats.total[iv.personId] || 0}场 · 连续${consec}场${risk ? "（建议换人）" : ""}`;
+      const chipColor = risk ? "#b45309" : color;
+      const chipBg = risk ? "#fdf0dd" : `${color}14`;
+      return `<span class="chip" style="border-color:${chipColor}22;background:${chipBg};color:${chipColor}" title="${esc(title)}"><span class="dot"></span>${esc(name)}${risk ? " 连" : ""}<span style="opacity:.72">${esc(short)}</span></span>`;
+    }).join("")}</span>`;
+  }
+
+  function hostDisplayName(session) {
+    return session.hostName || (session.hostId ? (findHost(session.hostId) || {}).name || "" : "") || "";
+  }
+
+  function fixHostName(name) {
+    const map = {
+      "思嘉": "连思嘉",
+      "彭彭": "彭魁博",
+      "雨涵": "和雨涵",
+      "俊杰": "陆俊杰",
+      "思铭": "刘思铭",
+      "刘思铭": "刘思铭",
+    };
+    return map[name] || name;
+  }
+
+  function sessionUnlocked(session) {
+    return !session.locked || Boolean(window.__unlockedSessions && window.__unlockedSessions.has(session.id));
+  }
+
+  function buildNoticeText(session) {
+    const timeDisplay = (session.time || "14:00-14:40").trim().replace("-", "–");
+    const rawCandidate = (session.candidates || "").split("\n").map((s) => s.trim()).find(Boolean) || "";
+    const candidateMatch = rawCandidate.match(/(.+?)外聘区域总监【(.+?)】/);
+    let region = "";
+    let name = "";
+    if (candidateMatch) {
+      region = candidateMatch[1].trim();
+      name = candidateMatch[2].trim();
+    } else {
+      const nameMatch = rawCandidate.match(/【(.+?)】/);
+      name = nameMatch ? nameMatch[1].trim() : (rawCandidate || "待定");
+    }
+    const mode = (session.mode || "").trim();
+    const form = mode === "线下" ? "**线下**" : "**腾讯会议**（会议号由主持人私聊发送）";
+    const host = hostDisplayName(session) || "xxx";
+    const interviewerLines = (session.interviewers || [])
+      .filter((iv) => iv.personId && iv.deptId)
+      .map((iv) => {
+        const dept = findDept(iv.deptId);
+        const person = findPerson(iv.personId);
+        return `${dept ? dept.name : "未知中心"} ${person ? person.name : "未知"}`;
+      });
+    const interviewerBlock = interviewerLines.length ? interviewerLines.map((line) => ` • ${line}`).join("\n") : " • 待定";
+    return [
+      "📣 **【竞聘通知｜外聘区域总监】**",
+      "",
+      "各位领导、同事：",
+      "",
+      region ? `现安排**${region}外聘区域总监候选人【${name}】**进行线上竞聘，具体安排如下：` : `现安排**外聘区域总监候选人【${name}】**进行线上竞聘，具体安排如下：`,
+      "",
+      "🕑 **竞聘时间**",
+      ` **${fmtDateShortWeekday(session.date)}${timeDisplay}**`,
+      "",
+      "👤 **竞聘人员**",
+      ` **${name}**`,
+      "",
+      "💻 **竞聘形式**",
+      ` ${form}`,
+      "",
+      "🎙️ **竞聘主持**",
+      ` 人力发展中心 **${host}**`,
+      "",
+      "👥 **面试官**",
+      interviewerBlock,
+      "",
+      "📌 **温馨提示**",
+      " 请各位面试官提前安排好时间，准时参会。",
+    ].join("\n");
+  }
+
+  function nextGroupDeadline() {
+    const now = new Date();
+    for (let i = 0; i < 8; i += 1) {
+      const d = new Date(now);
+      d.setDate(now.getDate() + i);
+      d.setHours(15, 0, 0, 0);
+      if ((d.getDay() === 1 || d.getDay() === 3) && d.getTime() > now.getTime()) return d;
+    }
+    return null;
+  }
+
+  function sendDeadlineForSession(session) {
+    const d = parseDate(session && session.date);
+    if (!d) return null;
+    const dl = new Date(d);
+    const day = d.getDay();
+    if (day === 2 || day === 4) {
+      dl.setDate(dl.getDate() - 1);
+    } else {
+      while (dl.getDay() !== 1 && dl.getDay() !== 3) {
+        dl.setDate(dl.getDate() - 1);
+      }
+    }
+    dl.setHours(15, 0, 0, 0);
+    return dl;
+  }
+
+  function nextPendingSession() {
+    return sortSessions(state.sessions.filter((s) => s.status === "待安排"))[0] || null;
+  }
+
+  function deadlineLabel(deadline) {
+    return deadline ? `${fmtDateCn(dateKey(deadline))} 15:00` : "-";
+  }
+
+  function scheduleGroupReminder(session) {
+    const deadline = (session ? sendDeadlineForSession(session) : null) || nextGroupDeadline();
+    if (!deadline) return;
+    const remindAt = deadline.getTime() - 30 * 60 * 1000;
+    const delay = remindAt - Date.now();
+    if (delay <= 0) return;
+    setTimeout(() => {
+      try {
+        new Notification("竞聘通知发送提醒", {
+          body: `请将竞聘通知在 ${deadlineLabel(deadline)} 前发送到【集团职能中心直属群】`,
+        });
+      } catch (err) {
+        console.warn("通知失败", err);
+      }
+      scheduleGroupReminder(nextPendingSession());
+    }, delay);
+  }
+
+  function enableGroupReminder() {
+    if (!("Notification" in window)) {
+      showToast("当前浏览器不支持通知提醒", "warn");
+      return;
+    }
+    Notification.requestPermission().then((permission) => {
+      if (permission === "granted") {
+        scheduleGroupReminder(nextPendingSession());
+        showToast("已开启到点提醒", "ok");
+      } else {
+        showToast("未授权通知，请在浏览器设置中允许", "warn");
+      }
+    }).catch(() => showToast("无法开启通知提醒", "warn"));
+  }
+
+  function copyText(text, message) {
+    const done = () => showToast(message || "通知已复制", "ok");
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => {
+        fallbackCopy(text);
+        done();
+      });
+      return;
+    }
+    fallbackCopy(text);
+    done();
+  }
+
+  function fallbackCopy(text) {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand("copy");
+    } catch (err) {
+      console.warn("复制失败", err);
+    }
+    ta.remove();
+  }
+
+  function deptChip(dept) {
+    return `<span class="chip neutral" style="border-color:${dept.color}30;background:${dept.color}10;color:${dept.color}"><span class="dot"></span>${esc(dept.shortName || dept.name)}</span>`;
+  }
+
+  function toggleSwitch(on, action, id) {
+    return `<button class="switch ${on ? "on" : ""}" data-action="${esc(action)}" data-id="${esc(id)}" data-on="${on ? 1 : 0}" type="button" role="switch" aria-checked="${on ? "true" : "false"}"></button>`;
+  }
+
+  // ---------- view rendering ----------
+
+  function renderCurrentView() {
+    if (currentView === "dashboard") renderDashboard();
+    if (currentView === "calendar") renderCalendar();
+    if (currentView === "records") renderRecords();
+    if (currentView === "overview") renderOverview();
+    if (currentView === "schedule") renderSchedule();
+    if (currentView === "roster") renderRoster();
+    if (currentView === "rotation") renderRotation();
+    if (currentView === "auto") renderAuto();
+    if (currentView === "process") renderProcess();
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  function renderDashboard() {
+    const root = $("#view-dashboard");
+    const today = todayIso();
+    const weekStart = startOfWeekIso(today);
+    const weekEnd = addDays(weekStart, 6);
+    const sessions = sortSessions(state.sessions.filter((s) => s.status !== "已取消"));
+    const todayCount = sessions.filter((s) => s.date === today).length;
+    const weekCount = sessions.filter((s) => s.date >= weekStart && s.date <= weekEnd).length;
+    const pendingConfirm = sessions.filter((s) => sessionProgress(s).label === "待确认").length;
+    const pendingNotice = sessions.filter((s) => sessionProgress(s).label === "待通知").length;
+    const upcoming = sortSessions(sessions.filter((s) => s.status === "待安排" && !sessionIsPassed(s))).slice(0, 3);
+    const overviewSessions = sortSessions(sessions.filter((s) => s.status === "待安排" && !sessionIsPassed(s)));
+    const todos = processTodos().slice(0, 12);
+    const doneTodos = processDoneTodos().slice(0, 12);
+    const monthSessions = sessions.filter((s) => {
+      const d = parseDate(s.date);
+      const now = new Date();
+      return d && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    }).length;
+
+    const recentCards = overviewSessions.length ? overviewSessions.map((s) => {
+      const progress = sessionProgress(s);
+      const inWeek = s.date >= weekStart && s.date <= weekEnd;
+      const badge = inWeek ? { text: "本周", cls: "ok" } : { text: "后续", cls: "neutral" };
+      const warnings = [];
+      if (!sessionIsFull(s)) warnings.push("缺少面试官");
+      if (!hostDisplayName(s)) warnings.push("主持人未确认");
+      if (progress.label === "待通知") warnings.push("通知尚未发送");
+      if (sessionHasPausedPerson(s)) warnings.push("暂停面试官被安排");
+      return `
+        <div class="recent-card">
+          <div class="recent-head">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+              <strong>${fmtDateShortWeekday(s.date)} · ${esc(s.time)}</strong>
+              <span class="chip ${badge.cls}">${badge.text}</span>
+              ${s.locked ? `<span class="chip neutral">🔒 已锁定</span>` : ""}
+            </div>
+            ${progressPill(progress)}
+          </div>
+          <div class="recent-candidate">${esc(s.candidates || "待定")}</div>
+          <div class="recent-meta">面试官：${personChips(s)}</div>
+          <div class="recent-meta">主持人：${esc(hostDisplayName(s)) || "未确认"}</div>
+          ${warnings.length ? `<div class="warn-line">${warnings.map((w) => "⚠️ " + w).join(" · ")}</div>` : ""}
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn small blue" data-action="copy-notice" data-id="${esc(s.id)}"><i data-lucide="copy"></i>复制通知</button>
+            <button class="btn small" data-action="edit-session" data-id="${esc(s.id)}"><i data-lucide="eye"></i>查看详情</button>
+          </div>
+        </div>
+      `;
+    }).join("") : '<div class="empty"><div class="big">暂无待开展场次</div><p>可以在右上角“新增竞聘”添加场次。</p></div>';
+
+    const todoHtml = todos.length ? todos.map((item) => `
+      <div class="todo-item">
+        <span class="todo-mark">⚠️</span>
+        <div class="todo-text">
+          <div class="todo-step-main">${esc(item.label)}</div>
+          <div class="todo-tags"><span class="chip neutral">${fmtDateShort(item.session.date)} · ${esc(candidateShortName(item.session))}</span></div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn small blue" data-action="${item.action === "mark-form" || item.action === "mark-ticket" ? "complete-todo" : item.action === "notice" ? "copy-notice" : "edit-session"}" data-step="${item.action === "mark-form" || item.action === "mark-ticket" ? item.step : ""}" data-id="${esc(item.session.id)}">处理</button>
+        </div>
+      </div>
+    `).join("") : '<div class="todo-item todo-clear"><span class="todo-mark">✓</span><div class="todo-text">当前没有需要处理的排班事项</div></div>';
+    const doneHtml = doneTodos.length ? `
+      <div class="todo-group">已完成（可撤回）</div>
+      ${doneTodos.map((item) => `
+        <div class="todo-item todo-done">
+          <span class="todo-mark">✓</span>
+          <div class="todo-text">
+            <div class="todo-step-main">${esc(item.label)}</div>
+            <div class="todo-tags"><span class="chip neutral">${fmtDateShort(item.session.date)} · ${esc(candidateShortName(item.session))}</span></div>
+          </div>
+          <button class="btn small ghost" data-action="undo-todo" data-step="${esc(item.step)}" data-id="${esc(item.session.id)}">撤回</button>
+        </div>
+      `).join("")}
+    ` : "";
+
+    root.innerHTML = `
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">工作台</h1>
+          <p class="page-desc">外聘区域总监竞聘排班工作台</p>
+        </div>
+        <div class="toolbar" style="margin:0">
+          <button class="btn ghost" data-action="nav-view" data-view="auto"><i data-lucide="settings-2"></i>自动排班设置</button>
+        </div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat"><div class="label">今日场次</div><div class="value">${todayCount}</div><div class="hint">${todayCount ? "今天有竞聘安排" : "今天暂无场次"}</div></div>
+        <div class="stat amber"><div class="label">待确认</div><div class="value">${pendingConfirm}</div><div class="hint">缺少面试官或主持人</div></div>
+        <div class="stat amber"><div class="label">待通知</div><div class="value">${pendingNotice}</div><div class="hint">已排好但尚未发送通知</div></div>
+        <div class="stat"><div class="label">本周场次</div><div class="value">${weekCount}</div><div class="hint">${fmtDateShort(weekStart)} - ${fmtDateShort(weekEnd)}</div></div>
+      </div>
+      <div class="notice-banner" style="margin-top:14px">
+        <i data-lucide="info"></i>
+        <div style="flex:1;min-width:0">
+          <p>为满足各区域的竞聘需求，总部将于每周二、周四下午14:00组织外聘区域总监竞聘，各区域需要有竞聘安排的，请于每周一、周三12:00前报备至人力发展中心，逾期报备的，将视情况顺延场次安排。</p>
+          <p style="margin:6px 0 0;font-weight:600">竞聘前，一定要检查面试工单【终试条件】是否已满足，未满足的先对接区域处理到位，再发起竞聘。</p>
+          <p style="margin:6px 0 0">群通知提醒：复制通知后，请于每周一、周三 15:00 前发到【集团职能中心直属群】。</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-head"><h2>场次概览</h2><span class="sub">共 ${overviewSessions.length} 场待开展，临近在前</span><button class="btn small ghost" data-action="nav-view" data-view="calendar">查看日历</button></div>
+          <div class="recent-list">${recentCards}</div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>本场轮值面试官</h2><button class="btn small ghost" data-action="nav-view" data-view="calendar">查看日历</button></div>
+          <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+            ${upcoming[0] ? `
+              <div class="rotation-now"><span>日期时间</span><strong>${fmtDateCn(upcoming[0].date)} ${esc(upcoming[0].time)}</strong></div>
+              <div class="rotation-now"><span>竞聘人员</span><strong>${esc(upcoming[0].candidates || "待定")}</strong></div>
+              <div class="rotation-now"><span>主持人</span><strong>${esc(hostDisplayName(upcoming[0])) || "未确认"}</strong></div>
+              <div>${personChips(upcoming[0])}</div>
+              <div class="rule-note" style="margin-top:4px"><i data-lucide="info"></i><div><p>本月已安排 ${monthSessions} 场</p></div></div>
+            ` : '<div class="empty">暂无待开展场次</div>'}
+          </div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:14px">
+        <div class="panel-head"><h2>待处理事项</h2><span class="sub">共 ${todos.length} 项</span></div>
+        <div class="todo-list">${todoHtml}${doneHtml}</div>
+      </div>
+    `;
+  }
+
+  function renderOverview() {
+    const root = $("#view-overview");
+    const sessionsAsc = sortSessions(state.sessions);
+    const sessionsDesc = sortSessionsDesc(state.sessions);
+    const firstDate = sessionsAsc[0] ? sessionsAsc[0].date : "";
+    const latest = sessionsDesc[0];
+
+    root.innerHTML = `
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">排班总览</h1>
+          <p class="page-desc">当前数据来自你提供的表格：${sessionsAsc.length} 场可见安排，从 ${firstDate ? fmtDateCn(firstDate) : "-"} 开始。</p>
+        </div>
+        <div class="toolbar" style="margin:0">
+          <button class="btn primary" data-action="fill-upcoming"><i data-lucide="wand-2"></i>一键排待开展场次</button>
+          <button class="btn blue" data-action="go-auto"><i data-lucide="settings-2"></i>调整规则</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2>最近一次安排</h2>
+          <button class="btn small ghost" data-action="nav-view" data-view="schedule">查看全部</button>
+        </div>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead><tr><th>日期</th><th>时间</th><th>竞聘人员</th><th>面试官</th><th>主持人</th><th>状态</th></tr></thead>
+            <tbody>
+              ${latest ? `
+                <tr>
+                  <td class="date-cell">${fmtDateCn(latest.date)}</td>
+                  <td>${esc(latest.time)}</td>
+                  <td style="max-width:260px">${esc(latest.candidates || "-")}</td>
+                  <td>${personChips(latest)}</td>
+                  <td>${esc(latest.hostName || (latest.hostId ? (findHost(latest.hostId) || {}).name || "" : "")) || "-"}</td>
+                  <td>${statusPill(latest.status)}</td>
+                </tr>
+              ` : '<tr><td colspan="6"><div class="empty">暂无排班记录</div></td></tr>'}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  function candidateShortName(session) {
+    const line = (session.candidates || "").split("\n")[0] || "";
+    const match = line.match(/【(.+?)】/);
+    return match ? match[1] : (line || "待定");
+  }
+
+  function sessionMatchesFilter(session) {
+    if (calendarFilter === "all") return true;
+    return sessionProgress(session).label === calendarFilter;
+  }
+
+  function renderCalendar() {
+    const root = $("#view-calendar");
+    if (!calendarWeekStart) calendarWeekStart = startOfWeekIso(todayIso());
+    const weekStart = calendarWeekStart;
+    const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+    const q = scheduleQuery.trim().toLowerCase();
+    const weekSessions = sortSessions(state.sessions.filter((s) => {
+      const inWeek = s.date >= weekStart && s.date <= addDays(weekStart, 6);
+      if (!inWeek || !sessionMatchesFilter(s)) return false;
+      if (!q) return true;
+      return `${s.date} ${s.time} ${s.candidates} ${s.note}`.toLowerCase().includes(q) ||
+        (s.interviewers || []).some((iv) => {
+          const p = findPerson(iv.personId);
+          return p && p.name.toLowerCase().includes(q);
+        });
+    }));
+    const filters = ["全部", "待确认", "待通知", "已确认", "已完成", "异常"];
+    const filterButtons = filters.map((f) => `<button class="btn small ${calendarFilter === f ? "primary" : "ghost"}" data-action="calendar-filter" data-filter="${f}">${f}</button>`).join("");
+    const dayLabels = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+
+    const weekHtml = `
+      <div class="calendar-week">
+        ${days.map((day, i) => {
+          const daySessions = weekSessions.filter((s) => s.date === day);
+          const isToday = day === todayIso();
+          return `
+            <div class="calendar-day ${isToday ? "today" : ""}">
+              <div class="cal-day-head"><strong>${dayLabels[i]}</strong><span>${fmtDateShort(day)}</span></div>
+              ${daySessions.map((s) => {
+                const progress = sessionProgress(s);
+                return `
+                  <div class="cal-session ${progress.tone}" data-action="edit-session" data-id="${esc(s.id)}" title="点击查看详情">
+                    <div class="cal-time">${s.locked ? "🔒 " : ""}${esc(s.time)}</div>
+                    <div class="cal-name">${esc(candidateShortName(s))}</div>
+                    <div class="cal-interviewers">${(s.interviewers || []).filter((iv) => iv.personId).map((iv) => esc((findPerson(iv.personId) || {}).name || "")).join("、") || "未排"}</div>
+                    <div>${progressPill(progress)}</div>
+                  </div>
+                `;
+              }).join("") || '<div class="cal-empty">-</div>'}
+            </div>
+          `;
+        }).join("")}
+      </div>
+    `;
+
+    const listHtml = `
+      <div class="table-wrap">
+        <table class="grid-table">
+          <thead><tr><th>日期</th><th>时间</th><th>竞聘人员</th><th>面试官</th><th>主持人</th><th>状态</th><th></th></tr></thead>
+          <tbody>
+            ${weekSessions.map((s) => {
+              const progress = sessionProgress(s);
+              return `<tr>
+                <td class="date-cell">${fmtDateCn(s.date)}</td>
+                <td>${esc(s.time)}</td>
+                <td style="max-width:220px">${esc(s.candidates || "-")}</td>
+                <td style="max-width:380px">${personChips(s)}</td>
+                <td>${esc(hostDisplayName(s)) || "-"}</td>
+                <td>${progressPill(progress)}</td>
+                <td><div style="display:flex;gap:6px"><button class="btn small" data-action="edit-session" data-id="${esc(s.id)}">编辑</button>${s.status === "待安排" ? `<button class="btn small blue" data-action="copy-notice" data-id="${esc(s.id)}">复制通知</button>` : ""}</div></td>
+              </tr>`;
+            }).join("") || '<tr><td colspan="7"><div class="empty">本周没有符合条件的场次</div></td></tr>'}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    root.innerHTML = `
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">排班日历</h1>
+          <p class="page-desc">按周查看竞聘安排，支持日期与状态快速筛选。</p>
+        </div>
+      </div>
+      <div class="toolbar">
+        <button class="btn small" data-action="cal-prev"><i data-lucide="chevron-left"></i>上一周</button>
+        <button class="btn small" data-action="cal-today">本周</button>
+        <button class="btn small" data-action="cal-next">下一周<i data-lucide="chevron-right"></i></button>
+        <input class="input" id="calDate" type="date" value="${esc(weekStart)}" style="width:160px">
+        <div class="spacer"></div>
+        <button class="btn small ${calendarView === "week" ? "primary" : "ghost"}" data-action="cal-view" data-view="week">周视图</button>
+        <button class="btn small ${calendarView === "list" ? "primary" : "ghost"}" data-action="cal-view" data-view="list">列表视图</button>
+      </div>
+      <div class="toolbar">
+        ${filterButtons}
+        <div class="spacer"></div>
+        <span style="color:var(--muted);font-size:12px">本周 ${weekSessions.length} 场</span>
+      </div>
+      <div class="panel">${calendarView === "week" ? weekHtml : listHtml}</div>
+    `;
+  }
+
+  function renderSchedule() {
+    const root = $("#view-schedule");
+    const all = sortSessions(state.sessions);
+    const pending = all.filter((s) => s.status === "待安排");
+    const history = sortSessionsDesc(all.filter((s) => s.status !== "待安排"));
+    const q = scheduleQuery.trim().toLowerCase();
+    const matchQuery = (s) => !q ||
+      `${s.date} ${s.time} ${s.mode} ${s.candidates} ${s.note}`.toLowerCase().includes(q) ||
+      (s.interviewers || []).some((iv) => {
+        const p = findPerson(iv.personId);
+        return p && p.name.toLowerCase().includes(q);
+      });
+    const pendingList = pending.filter(matchQuery);
+    const historyList = history.filter(matchQuery);
+    const nextSession = pendingList[0];
+    const needAuto = pendingList.some((s) => !sessionIsFull(s));
+
+    const rowHtml = (s, highlight) => `
+      <tr style="${highlight ? "background:var(--accent-soft)" : ""}">
+        <td class="date-cell">${fmtDateCn(s.date)}</td>
+        <td>${esc(s.time)}</td>
+        <td style="max-width:220px">${esc(s.candidates || "-")}</td>
+        <td style="max-width:420px">${personChips(s)}</td>
+        <td>${esc(hostDisplayName(s)) || "-"}</td>
+        <td style="max-width:180px">${esc(s.note || "-")}</td>
+        <td>${statusPill(s.status)}</td>
+        <td>
+          <div style="display:flex;gap:6px">
+            <button class="btn small" data-action="edit-session" data-id="${esc(s.id)}"><i data-lucide="pencil"></i>编辑</button>
+            ${s.status === "待安排" ? `<button class="btn small blue" data-action="copy-notice" data-id="${esc(s.id)}"><i data-lucide="copy"></i>复制通知</button>` : ""}
+            ${s.status === "待安排" && !sessionIsFull(s) ? `<button class="btn small blue" data-action="fill-session" data-id="${esc(s.id)}"><i data-lucide="wand-2"></i>按规则排班</button>` : ""}
+          </div>
+        </td>
+      </tr>
+    `;
+
+    root.innerHTML = `
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">排班表</h1>
+          <p class="page-desc">待开展场次优先展示，点击“编辑”可调整场次、换人或锁定安排。</p>
+        </div>
+        <button class="btn primary" data-action="add-session"><i data-lucide="calendar-plus"></i>新增场次</button>
+      </div>
+      <div class="toolbar">
+        <input class="input" id="scheduleSearch" style="width:220px" placeholder="搜索日期 / 竞聘人员 / 面试官" value="${esc(scheduleQuery)}">
+        <div class="spacer"></div>
+        <span style="color:var(--muted);font-size:12px">待开展 ${pendingList.length} 场 · 已开展 ${historyList.length} 场</span>
+      </div>
+
+      <div class="notice-banner">
+        <i data-lucide="info"></i>
+        <div style="flex:1;min-width:0">
+          <p>为满足各区域的竞聘需求，总部将于每周二、周四下午14:00组织外聘区域总监竞聘，各区域需要有竞聘安排的，请于每周一、周三12:00前报备至人力发展中心，逾期报备的，将视情况顺延场次安排。</p>
+          <p style="margin:6px 0 0;font-weight:600">竞聘前，一定要检查面试工单【终试条件】是否已满足，未满足的先对接区域处理到位，再发起竞聘。</p>
+          <p style="margin:6px 0 0">群通知提醒：复制通知后，请于每周一、周三 15:00 前发到【集团职能中心直属群】。</p>
+          <button class="btn small primary" data-action="enable-notify" style="margin-top:8px"><i data-lucide="bell"></i>开启到点提醒</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2>待开展</h2>
+          <span class="sub">${nextSession ? "下一场 " + fmtDateCn(nextSession.date) : "暂无待开展场次"}</span>
+          ${needAuto ? `<button class="btn small blue" data-action="fill-upcoming"><i data-lucide="wand-2"></i>一键排好待开展</button>` : ""}
+        </div>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead>
+              <tr><th>日期</th><th>时间</th><th>竞聘人员</th><th>面试官</th><th>主持人</th><th>备注</th><th>状态</th><th></th></tr>
+            </thead>
+            <tbody>
+              ${pendingList.map((s, i) => rowHtml(s, i === 0)).join("") || '<tr><td colspan="8"><div class="empty"><div class="big">没有待开展场次</div><p>可以点右上角“新增场次”。</p></div></td></tr>'}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:14px">
+        <div class="panel-head">
+          <h2>已开展 / 历史</h2>
+          <span class="sub">最新在前</span>
+        </div>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead>
+              <tr><th>日期</th><th>时间</th><th>竞聘人员</th><th>面试官</th><th>主持人</th><th>备注</th><th>状态</th><th></th></tr>
+            </thead>
+            <tbody>
+              ${historyList.map((s) => rowHtml(s, false)).join("") || '<tr><td colspan="8"><div class="empty"><div class="big">暂无历史场次</div></div></td></tr>'}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderRecords() {
+    const root = $("#view-records");
+    const records = sortSessionsDesc(state.sessions.filter((s) => s.status === "已开展" || s.status === "已取消"));
+    const filtered = recordsFilter === "all" ? records : records.filter((s) => s.status === recordsFilter);
+    const filterButtons = [["all", "全部"], ["已开展", "已完成"], ["已取消", "已取消"]].map(([value, label]) =>
+      `<button class="btn small ${recordsFilter === value ? "primary" : "ghost"}" data-action="records-filter" data-filter="${value}">${label}</button>`
+    ).join("");
+    root.innerHTML = `
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">竞聘记录</h1>
+          <p class="page-desc">已完成和已取消的历史场次，与未来排班分开查看。</p>
+        </div>
+      </div>
+      <div class="toolbar">${filterButtons}<div class="spacer"></div><span style="color:var(--muted);font-size:12px">共 ${filtered.length} 条</span></div>
+      <div class="panel">
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead><tr><th>日期</th><th>时间</th><th>竞聘人员</th><th>面试官</th><th>主持人</th><th>状态</th><th></th></tr></thead>
+            <tbody>
+              ${filtered.map((s) => `<tr>
+                <td class="date-cell">${fmtDateCn(s.date)}</td>
+                <td>${esc(s.time)}</td>
+                <td style="max-width:240px">${esc(s.candidates || "-")}</td>
+                <td style="max-width:380px">${personChips(s)}</td>
+                <td>${esc(hostDisplayName(s)) || "-"}</td>
+                <td>${statusPill(s.status)}</td>
+                <td><button class="btn small" data-action="edit-session" data-id="${esc(s.id)}">查看详情</button></td>
+              </tr>`).join("") || '<tr><td colspan="7"><div class="empty">暂无竞聘记录</div></td></tr>'}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderRoster() {
+    const root = $("#view-roster");
+    const stats = computeStats();
+    const departments = orderedDepartments();
+    const rotation = currentRotationInfo();
+    const allPeople = departments.flatMap((d) => d.people);
+    const activePeople = allPeople.filter((p) => p.enabled).length;
+    const pausedPeople = allPeople.length - activePeople;
+    const now = new Date();
+    const monthSessions = state.sessions.filter((s) => {
+      const d = parseDate(s.date);
+      return d && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    });
+    root.innerHTML = `
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">面试官</h1>
+        </div>
+        <button class="btn primary" data-action="add-dept"><i data-lucide="folder-plus"></i>新增部门</button>
+      </div>
+      <div class="stat-grid">
+        <div class="stat"><div class="label">全部</div><div class="value">${allPeople.length}</div></div>
+        <div class="stat"><div class="label">轮值中</div><div class="value">${activePeople}</div></div>
+        <div class="stat amber"><div class="label">暂停</div><div class="value">${pausedPeople}</div></div>
+        <div class="stat"><div class="label">本月已安排</div><div class="value">${monthSessions.length}</div><div class="hint">场次</div></div>
+      </div>
+      <div class="stack">
+        ${departments.map((dept) => {
+          const assign = state.sessions.reduce((n, s) => n + s.interviewers.filter((iv) => iv.deptId === dept.id).length, 0);
+          const missing = dept.people.filter((p) => p.enabled).length === 0;
+          const open = openDeptIds.has(dept.id);
+          return `
+            <details class="panel dept-block" ${open ? "open" : ""}>
+              <summary>
+                <span class="dept-color" style="background:${dept.color}"></span>
+                <span class="dept-name">${esc(dept.name)}</span>
+                <span class="dept-meta">${dept.shortName} · 每${dept.frequency === 2 ? "2轮" : "轮"}1次 · 参与${assign}次</span>
+                ${missing ? `<span class="chip missing">缺人</span>` : ""}
+                <span class="dept-summary-right">
+                  <button class="btn small ghost" data-action="toggle-dept" data-id="${esc(dept.id)}">${open ? "收起" : "展开"}</button>
+                  <button class="btn small danger-text" data-action="delete-dept" data-id="${esc(dept.id)}"><i data-lucide="trash-2"></i>删除</button>
+                </span>
+              </summary>
+              <div style="padding:0 14px 14px">
+                <div class="form-grid" style="padding:12px 0;border-top:1px solid var(--border)">
+                  <div class="field">
+                    <label>部门简称</label>
+                    <input class="input" data-path="departments.${dept.order}.shortName" value="${esc(dept.shortName)}">
+                  </div>
+                  <div class="field">
+                    <label>多久轮到一次</label>
+                    <select class="select" data-path="departments.${dept.order}.frequency" data-type="int">
+                      <option value="1" ${dept.frequency === 1 ? "selected" : ""}>每轮 1 次</option>
+                      <option value="2" ${dept.frequency === 2 ? "selected" : ""}>每 2 轮 1 次</option>
+                      <option value="3" ${dept.frequency === 3 ? "selected" : ""}>每 3 轮 1 次</option>
+                    </select>
+                  </div>
+                  <div class="field" style="grid-column:1/-1">
+                    <label>部门备注</label>
+                    <input class="input" data-path="departments.${dept.order}.note" value="${esc(dept.note)}" placeholder="例如：精英会前半月不安排">
+                  </div>
+                </div>
+                ${dept.people.map((p) => {
+                  const unavailable = (p.unavailable || []).map((u) => `${u.start || "长期"}${u.end ? " 至 " + u.end : ""}`).join("；") || "无";
+                  const monthCount = monthSessions.reduce((n, s) => n + (s.interviewers || []).filter((iv) => iv.personId === p.id).length, 0);
+                  const isCurrent = rotation.currentPerson && rotation.currentPerson.id === p.id;
+                  return `
+                    <div class="person-row">
+                      <div>
+                        <div class="person-name">${esc(p.name)}</div>
+                        <div class="person-note" title="${esc(p.note)}">${esc(p.note || "无备注")}</div>
+                        ${isCurrent ? `<span class="chip ok">● 当前轮值</span>` : ""}
+                      </div>
+                      <input class="input" data-path="departments.${dept.order}.people.${dept.people.indexOf(p)}.role" value="${esc(p.role)}" placeholder="中心负责人/助理">
+                      <div class="field check">
+                        ${toggleSwitch(p.enabled, "toggle-person", p.id)}
+                        <span>${p.enabled ? "启用" : "暂停"}</span>
+                      </div>
+                      <input class="input num" type="number" min="1" max="99" data-type="int" data-path="departments.${dept.order}.people.${dept.people.indexOf(p)}.maxConsecutive" value="${p.maxConsecutive}" title="连续排几场后换人">
+                      <div>
+                        <div style="color:var(--muted);font-size:12px">不可用：${esc(unavailable)}</div>
+                        <div style="display:flex;gap:6px;margin-top:4px">
+                          <button class="btn small ghost" data-action="add-unavailable" data-id="${esc(p.id)}"><i data-lucide="plus"></i>添加</button>
+                          ${(p.unavailable || []).length ? `<button class="btn small ghost" data-action="clear-unavailable" data-id="${esc(p.id)}"><i data-lucide="x"></i>清空</button>` : ""}
+                        </div>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:8px">
+                        <span class="count-line">累计 <b>${stats.total[p.id] || 0}</b> · 本月 <b>${monthCount}</b> · 最近 <b>${stats.lastDate[p.id] ? fmtDateShort(stats.lastDate[p.id]) : "-"}</b></span>
+                        <button class="btn small danger-text" data-action="delete-person" data-id="${esc(p.id)}"><i data-lucide="user-x"></i></button>
+                      </div>
+                    </div>
+                  `;
+                }).join("")}
+                <button class="btn small" data-action="add-person" data-id="${esc(dept.id)}" style="margin-top:10px"><i data-lucide="user-plus"></i>添加面试官</button>
+              </div>
+            </details>
+          `;
+        }).join("")}
+      </div>
+
+      <div class="panel" style="margin-top:14px">
+        <div class="panel-head">
+          <h2>主持人</h2>
+          <span class="sub">每人 1 次，轮完一轮再开始下一轮</span>
+          <button class="btn small primary" data-action="add-host"><i data-lucide="user-plus"></i>新增</button>
+        </div>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead><tr><th>人员</th><th>启用</th><th>参与次数</th></tr></thead>
+            <tbody>
+              ${state.hosts.map((h) => `
+                <tr>
+                  <td>${esc(h.name)}</td>
+                  <td>${toggleSwitch(h.enabled, "toggle-host", h.id)}</td>
+                  <td class="num">${countRole("hosts", h.id)}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      ${state.organizers.length ? `
+        <div class="panel" style="margin-top:14px">
+          <div class="panel-head"><h2>组织实施人</h2><span class="sub">可在此维护轮值名单</span></div>
+          <div class="table-wrap">
+            <table class="grid-table">
+              <thead><tr><th>人员</th><th>启用</th><th>参与次数</th></tr></thead>
+              <tbody>
+                ${state.organizers.map((o) => `
+                  <tr>
+                    <td>${esc(o.name)}</td>
+                    <td>${toggleSwitch(o.enabled, "toggle-organizer", o.id)}</td>
+                    <td class="num">${countRole("organizers", o.id)}</td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ` : ""}
+    `;
+  }
+
+  function renderRotation() {
+    const root = $("#view-rotation");
+    const depts = orderedDepartments();
+    const stats = computeStats();
+    root.innerHTML = `
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">轮值队列</h1>
+          <p class="page-desc">部门顺序决定下一场从哪个部门开始；每 2 轮 1 次的部门会自动隔轮参加。人员轮换在“面试官库”中维护。</p>
+        </div>
+        <button class="btn ghost danger-text" data-action="reset-cursor"><i data-lucide="rotate-ccw"></i>重置轮值指针</button>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>部门轮值顺序</h2>
+            <span class="sub">当前指针：${depts[state.cursors.deptIndex % depts.length]?.shortName || "-"}</span>
+          </div>
+          <div class="table-wrap">
+            <table class="grid-table">
+              <tbody>
+                ${depts.map((dept, i) => {
+                  const isCursor = i === (state.cursors.deptIndex % depts.length);
+                  const pass = state.cursors.deptPassCounts[dept.id] || 0;
+                  return `
+                    <tr style="${isCursor ? "background:var(--accent-soft)" : ""}">
+                      <td style="width:44px;color:var(--muted)" class="num">${i + 1}</td>
+                      <td style="width:150px">${deptChip(dept)}</td>
+                      <td>${dept.frequency === 2 ? "每2轮1次" : dept.frequency === 3 ? "每3轮1次" : "每轮1次"}</td>
+                      <td class="num" style="color:var(--muted)">过轮 ${pass}</td>
+                      <td style="width:110px">
+                        <div style="display:flex;gap:4px">
+                          <button class="btn small ghost" data-action="move-dept-up" data-id="${esc(dept.id)}" ${i === 0 ? "disabled" : ""}><i data-lucide="chevron-up"></i></button>
+                          <button class="btn small ghost" data-action="move-dept-down" data-id="${esc(dept.id)}" ${i === depts.length - 1 ? "disabled" : ""}><i data-lucide="chevron-down"></i></button>
+                        </div>
+                      </td>
+                    </tr>
+                  `;
+                }).join("")}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="stack">
+          <div class="panel">
+            <div class="panel-head"><h2>主持人轮值</h2><span class="sub">人发伙伴（不含组长）</span></div>
+            <div class="table-wrap">
+              <table class="grid-table">
+                <thead><tr><th>人员</th><th>启用</th><th>累计</th><th>连续上限</th></tr></thead>
+                <tbody>
+                  ${state.hosts.map((h) => `
+                    <tr>
+                      <td>${esc(h.name)}</td>
+                      <td>${toggleSwitch(h.enabled, "toggle-host", h.id)}</td>
+                      <td class="num">${countRole("hosts", h.id)}</td>
+                      <td><input class="input num" style="width:70px" type="number" min="1" max="99" data-type="int" data-path="hosts.${state.hosts.indexOf(h)}.maxConsecutive" value="${h.maxConsecutive}"></td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h2>组织实施人轮值</h2><span class="sub">刘思铭 — 和雨涵 — 美娜</span></div>
+            <div class="table-wrap">
+              <table class="grid-table">
+                <thead><tr><th>人员</th><th>启用</th><th>累计</th></tr></thead>
+                <tbody>
+                  ${state.organizers.map((o) => `
+                    <tr>
+                      <td>${esc(o.name)}</td>
+                      <td>${toggleSwitch(o.enabled, "toggle-organizer", o.id)}</td>
+                      <td class="num">${countRole("organizers", o.id)}</td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="rule-note">
+            <i data-lucide="info"></i>
+            <div>
+              <p><b>排班规则说明</b></p>
+              <ul>
+                <li>部门指针按上方顺序滚动，每场取 ${state.settings.interviewersPerSession} 个部门。</li>
+                <li>“每2轮1次”的部门在被选中后的下一轮自动跳过。</li>
+                <li>部门内按累计场次由少到多、上次安排更早者优先，连续达到上限后优先换人。</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    void stats;
+  }
+
+  function renderRules() {
+    const root = $("#view-rules");
+    const rotation = currentRotationInfo();
+    const depts = orderedDepartments();
+    const chain = depts.map((dept) => {
+      const enabledPeople = dept.people.filter((p) => p.enabled);
+      const names = enabledPeople.map((p) => p.name).join("、") || "暂无可用";
+      const isCurrent = rotation.headDept && rotation.headDept.id === dept.id;
+      const isPaused = !enabledPeople.length;
+      return `
+        <div class="chain-node ${isCurrent ? "current" : ""} ${isPaused ? "paused" : ""}">
+          <div class="chain-center">${esc(dept.shortName)}</div>
+          <div class="chain-person">${esc(names)}</div>
+          <div class="chain-status">${isPaused ? "暂停" : isCurrent ? "● 当前" : "正常"}</div>
+        </div>
+      `;
+    }).join('<span class="chain-arrow">→</span>');
+
+    root.innerHTML = `
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">轮值规则</h1>
+          <p class="page-desc">查看本场轮值面试官和完整轮值链，也可暂停/恢复或跳过本轮。</p>
+        </div>
+        <button class="btn primary" data-action="nav-view" data-view="auto"><i data-lucide="settings-2"></i>自动排班设置</button>
+      </div>
+      <div class="panel" style="margin-top:14px">
+        <div class="panel-head">
+          <h2>完整轮值链</h2>
+          <span class="sub">完整轮值顺序与暂停/跳过操作</span>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${rotation.currentPerson ? `<button class="btn small blue" data-action="toggle-person" data-id="${esc(rotation.currentPerson.id)}">暂停当前面试官</button>` : ""}
+            <button class="btn small ghost" data-action="skip-current"><i data-lucide="skip-forward"></i>跳过本轮</button>
+          </div>
+        </div>
+        <div class="rotation-chain">${chain}</div>
+      </div>
+    `;
+  }
+
+  function renderAuto() {
+    const root = $("#view-auto");
+    const latest = sortSessions(state.sessions).slice(-1)[0];
+    const defaultStart = addDays(latest ? latest.date : todayIso(), 1);
+    root.innerHTML = `
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">规则与排班</h1>
+          <p class="page-desc">先确认规则，再点按钮排班；排完还可以在“排班表”里手动换人并锁定。</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-head"><h2>排班规则</h2><span class="sub">改完点“保存规则”</span></div>
+          <div style="padding:16px">
+            <div class="form-grid">
+              <div class="field">
+                <label>每场中心负责人人数</label>
+                <input class="input num" id="cfgHeads" type="number" min="1" max="5" value="${state.settings.headsPerSession || 2}">
+              </div>
+              <div class="field">
+                <label>每场助理人数</label>
+                <input class="input num" id="cfgAssistants" type="number" min="1" max="8" value="${state.settings.assistantsPerSession || 3}">
+              </div>
+              <div class="field">
+                <label>每人连续排几场后换人</label>
+                <input class="input num" id="cfgConsec" type="number" min="1" max="10" value="${state.settings.maxConsecutivePerPerson}">
+                <span class="help">达到上限后自动换下一位（“两次后再轮排”）</span>
+              </div>
+              <div class="field">
+                <label>每场需要主持人</label>
+                <input class="input num" id="cfgHost" type="number" min="0" max="2" value="${state.settings.hostPerSession}">
+              </div>
+              <div class="field">
+                <label>默认时间</label>
+                <input class="input" id="cfgTime" value="${esc(state.settings.defaultTime)}">
+              </div>
+              <div class="field">
+                <label>默认模式</label>
+                <input class="input" id="cfgMode" value="${esc(state.settings.defaultMode)}">
+              </div>
+              <div class="field">
+                <label>场次解锁密码</label>
+                <input class="input" id="cfgLockPwd" value="${esc(state.settings.lockPassword || "123456")}">
+                <span class="help">锁定的场次需要密码才能修改</span>
+              </div>
+              <div class="field" style="grid-column:1/-1">
+                <label>固定场次星期（0=周日，可多选）</label>
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                  ${[0,1,2,3,4,5,6].map((d) => `<label class="chip ${(state.settings.weekdays || []).includes(d) ? "ok" : "neutral"}" style="cursor:pointer"><input type="checkbox" class="weekday-cb" value="${d}" ${(state.settings.weekdays || []).includes(d) ? "checked" : ""}> 周${"日一二三四五六"[d]}</label>`).join("")}
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+              <button class="btn primary" data-action="save-settings"><i data-lucide="check"></i>保存规则</button>
+              <button class="btn ghost" data-action="reset-cursor"><i data-lucide="rotate-ccw"></i>从第一个部门重新开始</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h2>开始排班</h2></div>
+          <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+            <button class="btn primary" data-action="fill-upcoming"><i data-lucide="wand-2"></i>排好全部待开展场次</button>
+            <button class="btn ghost" data-action="clear-auto"><i data-lucide="eraser"></i>清空未锁定安排</button>
+            <div style="border-top:1px solid var(--border);padding-top:14px">
+              <div class="form-grid">
+                <div class="field">
+                  <label>生成场次数量</label>
+                  <input class="input num" id="genCount" type="number" min="1" max="30" value="1">
+                </div>
+                <div class="field">
+                  <label>开始日期</label>
+                  <input class="input" id="genStart" type="date" value="${esc(defaultStart)}">
+                </div>
+              </div>
+              <button class="btn blue" id="genBtn" data-action="generate-sessions" style="margin-top:12px"><i data-lucide="calendar-plus"></i>生成未来 1 场</button>
+            </div>
+            <div class="rule-note" style="border-left-color:var(--blue);background:var(--blue-soft);color:#1d4ed8">
+              <i data-lucide="lightbulb"></i>
+              <div>
+                <p><b>提示</b></p>
+                <p>系统只改动没有锁定的位置。表格里已带的历史安排不会被覆盖；手动改过并勾选“锁定”的安排会保留。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderProcess() {
+    const root = $("#view-process");
+    const steps = [
+      {
+        num: 1,
+        title: "确认面试形式",
+        desc: "收到竞聘工单后，先联系区域助理确认本场是线上腾讯会议还是线下，再开始排班。",
+        actions: `<button class="btn small blue" data-action="nav-view" data-view="schedule"><i data-lucide="calendar-days"></i>去排班表</button>`,
+      },
+      {
+        num: 2,
+        title: "完成面试排班",
+        desc: "在排班表新增场次，使用“按规则排班”自动安排 2 位中心负责人 + 3 位助理，并核对主持人是否为本轮轮到的人。",
+        actions: `<button class="btn small primary" data-action="add-session"><i data-lucide="calendar-plus"></i>新增场次</button> <button class="btn small blue" data-action="nav-view" data-view="schedule"><i data-lucide="wand-2"></i>去排班表</button>`,
+      },
+      {
+        num: 3,
+        title: "完善候选人工单",
+        desc: "竞聘前检查面试工单【终试条件】和内容完成度，确保 100%；未满足的先对接区域处理到位，再发起竞聘。",
+        actions: `<button class="btn small blue" data-action="nav-view" data-view="schedule"><i data-lucide="check-circle-2"></i>查看场次备注</button>`,
+      },
+      {
+        num: 4,
+        title: "发送竞聘通知",
+        desc: "竞聘前一天把通知发给各面试官，并在周一/周三 15:00 前发到【集团职能中心直属群】；使用“复制通知”可直接生成文案。",
+        actions: `<button class="btn small primary" data-action="nav-view" data-view="schedule"><i data-lucide="copy"></i>去复制通知</button>`,
+      },
+    ];
+    root.innerHTML = `
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">竞聘流程</h1>
+          <p class="page-desc">从收到工单到发送通知的完整步骤，按顺序操作即可。</p>
+        </div>
+        <button class="btn primary" data-action="nav-view" data-view="schedule"><i data-lucide="calendar-days"></i>去排班表</button>
+      </div>
+      <div class="process-steps">
+        ${steps.map((step) => `
+          <div class="process-step">
+            <span class="process-num">${step.num}</span>
+            <div style="flex:1;min-width:0">
+              <h3>${step.title}</h3>
+              <p>${step.desc}</p>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">${step.actions}</div>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+      <div class="notice-banner" style="margin-top:14px">
+        <i data-lucide="info"></i>
+        <div style="flex:1;min-width:0">
+          <p><b>执行提示</b></p>
+          <p>建议每收到一个新工单，就按 1 → 2 → 3 → 4 的顺序走完；第 4 步记得在周一/周三 15:00 前发送。</p>
+        </div>
+      </div>
+    `;
+  }
+
+  // ---------- session modal ----------
+
+  function createDraftSession() {
+    draftHostAdvanced = false;
+    draftCursorSnapshot = null;
+    draftSession = {
+      id: uid("s"),
+      date: todayIso(),
+      time: state.settings.defaultTime || "14:00-14:40",
+      mode: state.settings.defaultMode || "腾讯会议",
+      candidates: "",
+      status: "待安排",
+      hostId: null,
+      organizerId: null,
+      notified: false,
+      formConfirmed: false,
+      ticketReady: false,
+      locked: false,
+      note: "",
+      interviewers: [],
+    };
+    return draftSession;
+  }
+
+  function openSessionModal(sessionId) {
+    const isNew = sessionId === "new";
+    const session = isNew ? (draftSession || createDraftSession()) : state.sessions.find((s) => s.id === sessionId);
+    if (!session) return;
+    if (!window.__unlockedSessions) window.__unlockedSessions = new Set();
+    if (!isNew && session.locked && !window.__unlockedSessions.has(session.id)) {
+      promptModal("场次已锁定", "请输入解锁密码", "", (pwd) => {
+        if (pwd === (state.settings.lockPassword || "123456")) {
+          window.__unlockedSessions.add(session.id);
+          openSessionModal(sessionId);
+        } else {
+          showToast("密码错误，无法修改", "warn");
+        }
+      });
+      return;
+    }
+    selectedSessionId = sessionId;
+    if (isNew && !session.hostId) {
+      const nextHost = peekNextHost(session);
+      if (nextHost) session.hostId = nextHost.id;
+    }
+    let hostOptions = state.hosts.map((h) => `<option value="${esc(h.id)}" ${session.hostId === h.id ? "selected" : ""}>${esc(h.name)}</option>`).join("");
+    if (!isNew && !session.hostId && session.hostName) {
+      hostOptions = `<option value="" selected>${esc(session.hostName)}（原表）</option>` + hostOptions;
+    }
+    const currentMode = (session.mode || "").trim();
+    const modeValue = currentMode.includes("腾讯会议") ? "腾讯会议" : (currentMode.includes("线下") || currentMode.includes("会议室")) ? "线下" : (currentMode || "腾讯会议");
+    let modeOptions = `<option value="腾讯会议" ${modeValue === "腾讯会议" ? "selected" : ""}>腾讯会议</option><option value="线下" ${modeValue === "线下" ? "selected" : ""}>线下</option>`;
+    if (modeValue !== "腾讯会议" && modeValue !== "线下") {
+      modeOptions += `<option value="${esc(modeValue)}" selected>${esc(modeValue)}</option>`;
+    }
+    const timeParts = (session.time || "14:00-14:40").split("-");
+    const timeStart = (timeParts[0] || "").trim() || "14:00";
+    const timeEnd = (timeParts[1] || "").trim() || "14:40";
+    const slots = session.interviewers || [];
+    const maxSlot = Math.max(state.settings.interviewersPerSession || 5, slots.length);
+    const depts = orderedDepartments();
+    const rows = [];
+    for (let i = 0; i < maxSlot; i += 1) {
+      const iv = slots.find((x) => x.slot === i) || { slot: i, deptId: "", personId: "", locked: false };
+      const slotPerson = iv.personId ? findPerson(iv.personId) : null;
+      const roleLabel = slotPerson ? (slotPerson.role || (i < (state.settings.headsPerSession || 2) ? "中心负责人" : "助理")) : (i < (state.settings.headsPerSession || 2) ? "中心负责人" : "助理");
+      const deptOptions = `<option value="">选择部门</option>${depts.map((d) => `<option value="${esc(d.id)}" ${iv.deptId === d.id ? "selected" : ""}>${esc(d.name)}</option>`).join("")}`;
+      const people = iv.deptId ? (findDept(iv.deptId)?.people || []) : [];
+      const personOptions = `<option value="">选择面试官</option>${people.map((p) => `<option value="${esc(p.id)}" ${iv.personId === p.id ? "selected" : ""}>${esc(p.name)}${p.enabled ? "" : "（暂停）"}</option>`).join("")}`;
+      rows.push(`
+        <div class="slot-row">
+          <div style="display:flex;align-items:center;gap:6px;min-width:0">
+            <span class="slot-index">${i + 1}</span>
+            <span class="chip neutral" style="white-space:nowrap">${esc(roleLabel)}</span>
+          </div>
+          <select class="select slot-dept" data-slot="${i}">${deptOptions}</select>
+          <select class="select slot-person" data-slot="${i}">${personOptions}</select>
+          <div class="lock-row">
+            <input type="checkbox" class="slot-lock" data-slot="${i}" ${iv.locked ? "checked" : ""}>
+            <span>锁定</span>
+          </div>
+        </div>
+      `);
+    }
+
+    openModal(`
+      <div class="modal-backdrop">
+        <div class="modal">
+          <div class="modal-head">
+            <h2>${isNew ? "新增场次" : "编辑场次 · " + fmtDateCn(session.date)}</h2>
+            <button class="btn ghost icon-only" data-action="close-modal"><i data-lucide="x"></i></button>
+          </div>
+          <div class="modal-body">
+            <h3 style="margin:0 0 10px;font-size:15px;padding-bottom:8px;border-bottom:1px solid var(--border)">场次信息</h3>
+            <div class="form-grid" style="margin-bottom:16px">
+              <div class="field">
+                <label>日期</label>
+                <input class="input" id="sesDate" type="date" value="${esc(session.date)}">
+              </div>
+              <div class="field">
+                <label>时间</label>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                  <input class="input" type="time" id="sesTimeStart" value="${esc(timeStart)}" style="flex:1;min-width:110px">
+                  <span style="color:var(--muted)">至</span>
+                  <input class="input" type="time" id="sesTimeEnd" value="${esc(timeEnd)}" style="flex:1;min-width:110px">
+                </div>
+              </div>
+              <div class="field">
+                <label>开展模式</label>
+                <select class="select" id="sesMode">${modeOptions}</select>
+              </div>
+              <div class="field">
+                <label>状态</label>
+                <select class="select" id="sesStatus">
+                  <option value="待安排" ${session.status === "待安排" ? "selected" : ""}>待开展</option>
+                  <option value="已开展" ${session.status === "已开展" ? "selected" : ""}>已开展</option>
+                  <option value="已取消" ${session.status === "已取消" ? "selected" : ""}>已取消</option>
+                </select>
+              </div>
+              <div class="field check">
+                <input type="checkbox" id="sesNotified" ${session.notified ? "checked" : ""}>
+                <label>已发送通知</label>
+              </div>
+              <div class="field check">
+                <input type="checkbox" id="sesFormConfirmed" ${session.formConfirmed ? "checked" : ""}>
+                <label>已确认面试形式</label>
+              </div>
+              <div class="field check">
+                <input type="checkbox" id="sesTicketReady" ${session.ticketReady ? "checked" : ""}>
+                <label>工单已完善</label>
+              </div>
+              <div class="field check">
+                <input type="checkbox" id="sesLocked" ${session.locked ? "checked" : ""}>
+                <label>锁定本场，禁止修改</label>
+              </div>
+              <div class="field" style="grid-column:1/-1">
+                <label>竞聘人员</label>
+                <input class="input" id="sesCandidates" placeholder="例如：李功镇大区外聘区域总监【王奉翔】" value="${esc(session.candidates)}">
+              </div>
+              <div class="field">
+                <label>主持人（本轮轮到）</label>
+                <select class="select" id="sesHost">${hostOptions}</select>
+                <span class="help">默认按轮值自动选择，可手动修改</span>
+              </div>
+              <div class="field" style="grid-column:1/-1">
+                <label>备注</label>
+                <textarea class="textarea" id="sesNote">${esc(session.note)}</textarea>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
+              <h3 style="margin:0;font-size:15px;padding-bottom:8px;border-bottom:1px solid var(--border);flex:1">面试官安排</h3>
+              <div style="display:flex;gap:6px">
+                <button class="btn small blue" data-action="fill-session" data-id="${isNew ? "new" : esc(session.id)}"><i data-lucide="wand-2"></i>按规则排班</button>
+              </div>
+            </div>
+            <div class="slot-list">${rows.join("")}</div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn danger" data-action="delete-session" data-id="${isNew ? "new" : esc(session.id)}"><i data-lucide="trash-2"></i>${isNew ? "放弃新增" : "删除场次"}</button>
+            <div style="flex:1"></div>
+            <button class="btn blue" data-action="copy-notice" data-id="${isNew ? "new" : esc(session.id)}"><i data-lucide="copy"></i>复制通知</button>
+            <button class="btn ghost" data-action="close-modal">取消</button>
+            <button class="btn primary" data-action="save-session" data-id="${isNew ? "new" : esc(session.id)}"><i data-lucide="check"></i>保存</button>
+          </div>
+        </div>
+      </div>
+    `);
+  }
+
+  function refreshModalSlotPeople() {
+    const modal = $("#modalRoot");
+    if (!modal || !selectedSessionId) return;
+    $$(".slot-row", modal).forEach((row) => {
+      const slot = Number(row.querySelector(".slot-dept").dataset.slot);
+      const deptId = row.querySelector(".slot-dept").value;
+      const personSel = row.querySelector(".slot-person");
+      const dept = findDept(deptId);
+      const current = personSel.value;
+      personSel.innerHTML = `<option value="">选择面试官</option>${(dept ? dept.people : []).map((p) => `<option value="${esc(p.id)}" ${p.id === current ? "selected" : ""}>${esc(p.name)}${p.enabled ? "" : "（暂停）"}</option>`).join("")}`;
+    });
+    if (window.lucide) window.lucide.createIcons(modal);
+  }
+
+  function saveSessionFromModal() {
+    const isNew = selectedSessionId === "new";
+    const session = isNew ? draftSession : state.sessions.find((s) => s.id === selectedSessionId);
+    if (!session) return;
+    session.date = $("#sesDate").value || session.date;
+    const timeStart = $("#sesTimeStart")?.value || "14:00";
+    const timeEnd = $("#sesTimeEnd")?.value || "14:40";
+    session.time = `${timeStart}-${timeEnd}`;
+    session.mode = $("#sesMode").value.trim() || "腾讯会议";
+    session.status = $("#sesStatus").value;
+    session.candidates = $("#sesCandidates").value;
+    session.notified = $("#sesNotified")?.checked === true;
+    session.formConfirmed = $("#sesFormConfirmed")?.checked === true;
+    session.ticketReady = $("#sesTicketReady")?.checked === true;
+    session.locked = $("#sesLocked")?.checked === true;
+    session.hostId = $("#sesHost").value || null;
+    session.organizerId = $("#sesOrg")?.value || null;
+    session.note = $("#sesNote").value;
+    const interviewers = [];
+    $$(".slot-row").forEach((row) => {
+      const slot = Number(row.querySelector(".slot-dept").dataset.slot);
+      interviewers.push({
+        slot,
+        deptId: row.querySelector(".slot-dept").value || null,
+        personId: row.querySelector(".slot-person").value || null,
+        locked: row.querySelector(".slot-lock").checked,
+      });
+    });
+    session.interviewers = interviewers.filter((iv) => iv.deptId || iv.personId || iv.locked);
+    if (isNew) {
+      if (draftCursorSnapshot) {
+        state.cursors = draftCursorSnapshot;
+        if (session.hostId) {
+          const hostIdx = state.hosts.findIndex((h) => h.id === session.hostId);
+          if (hostIdx >= 0) state.cursors.hostIndex = (hostIdx + 1) % state.hosts.length;
+        }
+      } else if (session.hostId && !draftHostAdvanced) {
+        const hostIdx = state.hosts.findIndex((h) => h.id === session.hostId);
+        if (hostIdx >= 0) state.cursors.hostIndex = (hostIdx + 1) % state.hosts.length;
+      }
+      state.sessions.push(session);
+    }
+    closeModal();
+    saveAndRender();
+    showToast("场次已保存", "ok");
+  }
+
+  // ---------- import / export ----------
+
+  function downloadFile(name, content, mime) {
+    const blob = new Blob([content], { type: mime || "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function exportExcel() {
+    if (!window.XLSX) {
+      exportCsv();
+      showToast("Excel 解析库未加载，已改为导出 CSV", "warn");
+      return;
+    }
+    const rosterRows = [["部门", "部门简称", "轮值频率", "面试官", "角色", "启用", "连续上限", "备注"]];
+    for (const dept of orderedDepartments()) {
+      for (const p of dept.people) {
+        rosterRows.push([dept.name, dept.shortName, dept.frequency, p.name, p.role, p.enabled ? "是" : "否", p.maxConsecutive, p.note]);
+      }
+    }
+    const maxSlots = Math.max(1, state.settings.interviewersPerSession || 5);
+    const sessionHead = ["日期", "时间", "开展模式", "竞聘人员", "状态", "主持人", "组织实施人"];
+    for (let i = 1; i <= maxSlots; i += 1) sessionHead.push(`面试官${i}`, `部门${i}`);
+    sessionHead.push("备注");
+    const sessionRows = [sessionHead];
+    for (const s of sortSessions(state.sessions)) {
+      const row = [s.date, s.time, s.mode, s.candidates, s.status, s.hostName || findHost(s.hostId)?.name || "", findOrganizer(s.organizerId)?.name || ""];
+      const ivs = (s.interviewers || []).slice().sort((a, b) => a.slot - b.slot);
+      for (let i = 0; i < maxSlots; i += 1) {
+        const iv = ivs[i];
+        row.push(iv && iv.personId ? (findPerson(iv.personId)?.name || "") : "");
+        row.push(iv && iv.deptId ? (findDept(iv.deptId)?.name || "") : "");
+      }
+      row.push(s.note || "");
+      sessionRows.push(row);
+    }
+    const rotationRows = [["部门", "部门简称", "轮值顺序", "轮值频率"]];
+    orderedDepartments().forEach((d, i) => rotationRows.push([d.name, d.shortName, i + 1, d.frequency]));
+    const hostRows = [["姓名", "启用", "连续几场后换人", "备注"]];
+    state.hosts.forEach((h) => hostRows.push([h.name, h.enabled ? "是" : "否", h.maxConsecutive, h.note || ""]));
+    const wb = window.XLSX.utils.book_new();
+    window.XLSX.utils.book_append_sheet(wb, window.XLSX.utils.aoa_to_sheet(rosterRows), "面试官库");
+    window.XLSX.utils.book_append_sheet(wb, window.XLSX.utils.aoa_to_sheet(sessionRows), "排班表");
+    window.XLSX.utils.book_append_sheet(wb, window.XLSX.utils.aoa_to_sheet(rotationRows), "轮值设置");
+    window.XLSX.utils.book_append_sheet(wb, window.XLSX.utils.aoa_to_sheet(hostRows), "主持人");
+    window.XLSX.writeFile(wb, "面试官轮值排班表.xlsx");
+    showToast("已导出 Excel", "ok");
+  }
+
+  function exportCsv() {
+    const head = ["日期", "时间", "开展模式", "竞聘人员", "状态", "主持人", "组织实施人", "面试官", "部门", "备注"];
+    const rows = [head];
+    for (const s of sortSessions(state.sessions)) {
+      const names = (s.interviewers || []).slice().sort((a, b) => a.slot - b.slot).map((iv) => iv.personId ? (findPerson(iv.personId)?.name || "") : "").join("、");
+      const depts = (s.interviewers || []).slice().sort((a, b) => a.slot - b.slot).map((iv) => iv.deptId ? (findDept(iv.deptId)?.name || "") : "").join("、");
+      rows.push([s.date, s.time, s.mode, s.candidates, s.status, s.hostName || findHost(s.hostId)?.name || "", findOrganizer(s.organizerId)?.name || "", names, depts, s.note]);
+    }
+    const csv = "\uFEFF" + rows.map((r) => r.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+    downloadFile("面试官轮值排班表.csv", csv, "text/csv;charset=utf-8");
+  }
+
+  async function importFile(file) {
+    const isXlsx = /\.xlsx?$/i.test(file.name);
+    if (isXlsx && window.XLSX) {
+      try {
+        const buffer = await file.arrayBuffer();
+        const wb = window.XLSX.read(buffer, { type: "array" });
+        const parsed = parseExportedWorkbook(wb);
+        if (parsed) {
+          state = normalizeState(parsed);
+          saveAndRender();
+          showToast("已从 Excel 导入", "ok");
+          return;
+        }
+      } catch (err) {
+        console.error(err);
+        showToast("Excel 解析失败，请导入 JSON", "error");
+        return;
+      }
+    }
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      if (!parsed.departments || !parsed.sessions) throw new Error("缺少 departments/sessions");
+      state = normalizeState(parsed);
+      saveAndRender();
+      showToast("已导入 JSON", "ok");
+    } catch (err) {
+      console.error(err);
+      showToast("导入失败：文件格式不正确", "error");
+    }
+  }
+
+  function parseExportedWorkbook(wb) {
+    const rosterSheet = wb.Sheets["面试官库"];
+    const sessionSheet = wb.Sheets["排班表"];
+    const rotationSheet = wb.Sheets["轮值设置"];
+    const hostSheet = wb.Sheets["主持人"];
+    if (!rosterSheet || !sessionSheet) return null;
+    const roster = window.XLSX.utils.sheet_to_json(rosterSheet, { defval: "" });
+    const departments = [];
+    const deptMap = {};
+    let order = 0;
+    for (const row of roster) {
+      const name = String(row["部门"] || "").trim();
+      if (!name) continue;
+      if (!deptMap[name]) {
+        const dept = {
+          id: "d_" + order,
+          name,
+          shortName: String(row["部门简称"] || name),
+          order,
+          frequency: Number(row["轮值频率"] || 1) || 1,
+          color: ["#2563eb", "#0f766e", "#7c3aed", "#b45309", "#be123c", "#4f46e5", "#0d9488", "#d97706", "#db2777", "#059669", "#1d4ed8"][order % 11],
+          note: "",
+          people: [],
+        };
+        departments.push(dept);
+        deptMap[name] = dept;
+        order += 1;
+      }
+      const dept = deptMap[name];
+      const personName = String(row["面试官"] || "").trim();
+      if (!personName) continue;
+      dept.people.push({
+        id: `${dept.id}_${dept.people.length}`,
+        name: personName,
+        role: String(row["角色"] || ""),
+        enabled: String(row["启用"] || "是") !== "否",
+        maxConsecutive: Number(row["连续上限"] || 2) || 2,
+        note: String(row["备注"] || ""),
+        unavailable: [],
+      });
+    }
+    if (!departments.length) return null;
+    const personIndex = {};
+    for (const d of departments) for (const p of d.people) personIndex[`${d.name}|${p.name}`] = { deptId: d.id, personId: p.id };
+    const sessionRows = window.XLSX.utils.sheet_to_json(sessionSheet, { defval: "" });
+    const sessions = [];
+    for (const row of sessionRows) {
+      const date = String(row["日期"] || "").trim();
+      if (!date) continue;
+      const hostName = String(row["主持人"] || "").trim();
+      const interviewers = [];
+      for (let i = 1; i <= 10; i += 1) {
+        const person = String(row[`面试官${i}`] || "").trim();
+        const deptName = String(row[`部门${i}`] || "").trim();
+        if (!person) continue;
+        const key = `${deptName}|${person}`;
+        const ref = personIndex[key] || { deptId: deptName, personId: "unknown_" + person };
+        interviewers.push({ slot: interviewers.length, deptId: ref.deptId, personId: ref.personId, locked: true });
+      }
+      sessions.push({
+        id: uid("imp"),
+        date,
+        time: String(row["时间"] || "14:00-14:40"),
+        mode: String(row["开展模式"] || "腾讯会议"),
+        candidates: String(row["竞聘人员"] || ""),
+        status: String(row["状态"] || "待安排"),
+        hostName,
+        hostId: null,
+        organizerId: null,
+        note: String(row["备注"] || ""),
+        interviewers,
+      });
+    }
+    let rotationOrder = departments.map((d) => d.id);
+    if (rotationSheet) {
+      const rot = window.XLSX.utils.sheet_to_json(rotationSheet, { defval: "" });
+      rotationOrder = rot
+        .map((r) => String(r["部门"] || "").trim())
+        .filter((n) => deptMap[n])
+        .map((n) => deptMap[n].id);
+    }
+    departments.forEach((d, i) => {
+      const idx = rotationOrder.indexOf(d.id);
+      d.order = idx >= 0 ? idx : i;
+    });
+    let hosts = [];
+    if (hostSheet) {
+      const hostRows = window.XLSX.utils.sheet_to_json(hostSheet, { defval: "" });
+      hosts = hostRows.map((h, i) => ({
+        id: "host_" + i,
+        name: String(h["姓名"] || "").trim(),
+        enabled: String(h["启用"] || "是") !== "否",
+        maxConsecutive: Number(h["连续几场后换人"] || 1) || 1,
+        note: String(h["备注"] || ""),
+        unavailable: [],
+      })).filter((h) => h.name);
+    }
+    if (!hosts.length) {
+      hosts = ["连思嘉", "彭魁博", "和雨涵", "陆俊杰", "刘思铭"].map((name, i) => ({
+        id: "host_" + i,
+        name,
+        enabled: true,
+        maxConsecutive: 1,
+        note: "主持人",
+        unavailable: [],
+      }));
+    }
+    const hostMap = new Map(hosts.map((h) => [h.name, h.id]));
+    for (const s of sessions) {
+      if (s.hostName && hostMap.has(s.hostName)) s.hostId = hostMap.get(s.hostName);
+      delete s.hostName;
+    }
+    const organizers = [];
+    const pass = {};
+    for (const d of departments) pass[d.id] = 0;
+    let lastOrder = 0;
+    for (const s of sessions) {
+      for (const iv of s.interviewers) {
+        pass[iv.deptId] = (pass[iv.deptId] || 0) + 1;
+        const dept = departments.find((d) => d.id === iv.deptId);
+        if (dept) lastOrder = dept.order;
+      }
+    }
+    for (const d of departments) pass[d.id] = (pass[d.id] || 0) * d.frequency;
+    return {
+      version: 1,
+      settings: { headsPerSession: 2, assistantsPerSession: 3, interviewersPerSession: 5, maxConsecutivePerPerson: 1, hostPerSession: 1, organizerPerSession: 0, defaultMode: "腾讯会议", defaultTime: "14:00-14:40", weekdays: [2, 4] },
+      departments,
+      hosts,
+      organizers,
+      sessions,
+      cursors: { deptIndex: (lastOrder + 1) % departments.length, deptPassCounts: pass, hostIndex: 0, organizerIndex: 0 },
+      meta: { title: "导入排班数据" },
+    };
+  }
+
+  function resetToSeed() {
+    if (!confirm("确定恢复为初始数据？当前未导出的修改会丢失。")) return;
+    try { localStorage.removeItem(STORAGE_KEY); } catch (err) { /* ignore */ }
+    state = normalizeState(deepClone(window.SEED_DATA));
+    saveAndRender();
+    showToast("已恢复初始数据", "ok");
+  }
+
+  // ---------- event handling ----------
+
+  function setView(view) {
+    currentView = view;
+    $$(".nav-item").forEach((btn) => btn.classList.toggle("active", btn.dataset.view === view));
+    $$(".view").forEach((section) => section.classList.toggle("active", section.id === `view-${view}`));
+    renderCurrentView();
+  }
+
+  function setByPath(path, value, type) {
+    const parts = path.split(".");
+    let obj = state;
+    for (let i = 0; i < parts.length - 1; i += 1) {
+      if (obj[parts[i]] == null) obj[parts[i]] = {};
+      obj = obj[parts[i]];
+    }
+    const key = parts[parts.length - 1];
+    if (type === "int") obj[key] = parseInt(value, 10) || 0;
+    else if (type === "bool") obj[key] = value === "true" || value === true;
+    else obj[key] = value;
+  }
+
+  function deptIndexById(id) {
+    return orderedDepartments().findIndex((d) => d.id === id);
+  }
+
+  function moveDept(id, dir) {
+    const list = orderedDepartments();
+    const idx = list.findIndex((d) => d.id === id);
+    const target = idx + dir;
+    if (idx < 0 || target < 0 || target >= list.length) return;
+    const a = list[idx];
+    const b = list[target];
+    const tmp = a.order;
+    a.order = b.order;
+    b.order = tmp;
+    saveAndRender();
+  }
+
+  function togglePerson(id) {
+    const p = findPerson(id);
+    if (!p) return;
+    p.enabled = !p.enabled;
+    saveAndRender();
+  }
+
+  function deletePerson(id) {
+    const p = findPerson(id);
+    const dept = state.departments.find((d) => d.people.some((x) => x.id === id));
+    if (!p || !dept) return;
+    if (!confirm(`确定删除 ${p.name}？历史场次中的名字会保留为未知。`)) return;
+    dept.people = dept.people.filter((x) => x.id !== id);
+    saveAndRender();
+  }
+
+  function addPerson(deptId) {
+    const dept = findDept(deptId);
+    if (!dept) return;
+    promptModal("添加面试官", "请输入姓名", "", (name) => {
+      if (!name.trim()) return;
+      dept.people.push({
+        id: uid("p"),
+        name: name.trim(),
+        role: "",
+        enabled: true,
+        note: "",
+        maxConsecutive: state.settings.maxConsecutivePerPerson || 1,
+        unavailable: [],
+      });
+      saveAndRender();
+      showToast("已添加面试官", "ok");
+    });
+  }
+
+  function addDept() {
+    openModal(`
+      <div class="modal-backdrop">
+        <div class="modal" style="width:520px">
+          <div class="modal-head">
+            <h2>新增部门</h2>
+            <button class="btn ghost icon-only" data-action="close-modal"><i data-lucide="x"></i></button>
+          </div>
+          <div class="modal-body">
+            <div class="form-grid">
+              <div class="field">
+                <label>部门名称</label>
+                <input class="input" id="deptName" placeholder="例如：信息技术中心">
+              </div>
+              <div class="field">
+                <label>部门简称</label>
+                <input class="input" id="deptShort" placeholder="例如：信息">
+              </div>
+              <div class="field">
+                <label>多久轮到一次</label>
+                <select class="select" id="deptFreq">
+                  <option value="1">每轮 1 次</option>
+                  <option value="2">每 2 轮 1 次</option>
+                  <option value="3">每 3 轮 1 次</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>面试官姓名（可留空）</label>
+                <input class="input" id="deptPersonName" placeholder="例如：张三">
+              </div>
+              <div class="field">
+                <label>职级</label>
+                <select class="select" id="deptPersonRole">
+                  <option value="中心负责人">中心负责人</option>
+                  <option value="助理">助理</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn ghost" data-action="close-modal">取消</button>
+            <button class="btn primary" data-action="save-add-dept"><i data-lucide="check"></i>保存</button>
+          </div>
+        </div>
+      </div>
+    `);
+  }
+
+  function saveAddDept() {
+    const name = $("#deptName").value.trim();
+    if (!name) {
+      showToast("请填写部门名称", "warn");
+      return;
+    }
+    const order = orderedDepartments().length;
+    const personName = $("#deptPersonName").value.trim();
+    const people = [];
+    if (personName) {
+      people.push({
+        id: uid("p"),
+        name: personName,
+        role: $("#deptPersonRole").value,
+        enabled: true,
+        note: "",
+        maxConsecutive: state.settings.maxConsecutivePerPerson || 1,
+        unavailable: [],
+      });
+    }
+    const dept = {
+      id: uid("d"),
+      name,
+      shortName: $("#deptShort").value.trim() || name,
+      order,
+      frequency: parseInt($("#deptFreq").value, 10) || 1,
+      color: ["#2563eb", "#0f766e", "#7c3aed", "#b45309", "#be123c", "#4f46e5", "#0d9488", "#d97706", "#db2777", "#059669", "#1d4ed8"][order % 11],
+      note: "",
+      people,
+    };
+    state.departments.push(dept);
+    state.cursors.deptPassCounts[dept.id] = 0;
+    closeModal();
+    saveAndRender();
+    showToast(`已新增部门${people.length ? "及面试官" : ""}`, "ok");
+  }
+
+  function addHost() {
+    promptModal("新增主持人", "请输入主持人姓名", "", (name) => {
+      if (!name.trim()) return;
+      const fixedName = fixHostName(name.trim());
+      if (state.hosts.some((h) => h.name === fixedName)) {
+        showToast("该主持人已存在", "warn");
+        return;
+      }
+      state.hosts.push({
+        id: uid("host"),
+        name: fixedName,
+        enabled: true,
+        note: "主持人",
+        maxConsecutive: 1,
+        unavailable: [],
+      });
+      saveAndRender();
+      showToast("已新增主持人", "ok");
+    });
+  }
+
+  function deleteDept(id) {
+    const dept = findDept(id);
+    if (!dept) return;
+    if (!confirm(`确定删除部门 ${dept.name}？历史场次保留，但后续排班不再使用。`)) return;
+    state.departments = state.departments.filter((d) => d.id !== id);
+    state.cursors.deptPassCounts = Object.fromEntries(Object.entries(state.cursors.deptPassCounts || {}).filter(([k]) => k !== id));
+    orderedDepartments().forEach((d, i) => { d.order = i; });
+    saveAndRender();
+  }
+
+  function addUnavailable(personId) {
+    const p = findPerson(personId);
+    if (!p) return;
+    openModal(`
+      <div class="modal-backdrop">
+        <div class="modal" style="width:480px">
+          <div class="modal-head">
+            <h2>添加不可用日期 · ${esc(p.name)}</h2>
+            <button class="btn ghost icon-only" data-action="close-modal"><i data-lucide="x"></i></button>
+          </div>
+          <div class="modal-body">
+            <div class="form-grid">
+              <div class="field">
+                <label>开始日期</label>
+                <input class="input" id="unavStart" type="date">
+              </div>
+              <div class="field">
+                <label>结束日期（可留空）</label>
+                <input class="input" id="unavEnd" type="date">
+              </div>
+              <div class="field" style="grid-column:1/-1">
+                <label>原因</label>
+                <input class="input" id="unavLabel" placeholder="例如：出差 / 休产检 / 会议冲突">
+              </div>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn ghost" data-action="close-modal">取消</button>
+            <button class="btn primary" data-action="save-unavailable" data-id="${esc(personId)}"><i data-lucide="check"></i>保存</button>
+          </div>
+        </div>
+      </div>
+    `);
+  }
+
+  function saveUnavailable(personId) {
+    const p = findPerson(personId);
+    if (!p) return;
+    const start = $("#unavStart").value;
+    const end = $("#unavEnd").value;
+    if (!start && !end) {
+      showToast("请至少填写开始日期", "warn");
+      return;
+    }
+    p.unavailable = p.unavailable || [];
+    p.unavailable.push({ start: start || "", end: end || "", label: $("#unavLabel").value.trim() });
+    closeModal();
+    saveAndRender();
+    showToast("不可用日期已添加", "ok");
+  }
+
+  function clearUnavailable(personId) {
+    const p = findPerson(personId);
+    if (!p) return;
+    p.unavailable = [];
+    saveAndRender();
+  }
+
+  function promptModal(title, placeholder, defaultValue, callback) {
+    openModal(`
+      <div class="modal-backdrop">
+        <div class="modal" style="width:440px">
+          <div class="modal-head">
+            <h2>${esc(title)}</h2>
+            <button class="btn ghost icon-only" data-action="close-modal"><i data-lucide="x"></i></button>
+          </div>
+          <div class="modal-body">
+            <input class="input" id="promptValue" style="width:100%" placeholder="${esc(placeholder)}" value="${esc(defaultValue || "")}">
+          </div>
+          <div class="modal-foot">
+            <button class="btn ghost" data-action="close-modal">取消</button>
+            <button class="btn primary" data-action="confirm-prompt"><i data-lucide="check"></i>确定</button>
+          </div>
+        </div>
+      </div>
+    `);
+    setTimeout(() => $("#promptValue")?.focus(), 50);
+    window.__promptCallback = callback;
+  }
+
+  function addSession() {
+    createDraftSession();
+    openSessionModal("new");
+  }
+
+  function deleteSession(id) {
+    if (id === "new") {
+      closeModal();
+      showToast("已放弃新增", "ok");
+      return;
+    }
+    const s = state.sessions.find((x) => x.id === id);
+    if (!s || !confirm(`确定删除 ${fmtDateCn(s.date)} 这场？`)) return;
+    state.sessions = state.sessions.filter((x) => x.id !== id);
+    closeModal();
+    saveAndRender();
+    showToast("场次已删除", "ok");
+  }
+
+  function saveSettings() {
+    const heads = Math.max(1, parseInt($("#cfgHeads").value, 10) || 2);
+    const assistants = Math.max(1, parseInt($("#cfgAssistants").value, 10) || 3);
+    state.settings.headsPerSession = heads;
+    state.settings.assistantsPerSession = assistants;
+    state.settings.interviewersPerSession = heads + assistants;
+    state.settings.maxConsecutivePerPerson = Math.max(1, parseInt($("#cfgConsec").value, 10) || 1);
+    state.settings.hostPerSession = Math.max(0, parseInt($("#cfgHost").value, 10) || 0);
+    const orgEl = document.getElementById("cfgOrg");
+    state.settings.organizerPerSession = orgEl ? Math.max(0, parseInt(orgEl.value, 10) || 0) : 0;
+    state.settings.defaultTime = $("#cfgTime").value.trim() || "14:00-14:40";
+    state.settings.defaultMode = $("#cfgMode").value.trim() || "腾讯会议";
+    state.settings.lockPassword = $("#cfgLockPwd")?.value.trim() || "123456";
+    state.settings.weekdays = $$(".weekday-cb").filter((cb) => cb.checked).map((cb) => Number(cb.value));
+    if (!state.settings.weekdays.length) state.settings.weekdays = [2, 4];
+    saveAndRender();
+    showToast("排班规则已保存", "ok");
+  }
+
+  document.addEventListener("click", (e) => {
+    const actionEl = e.target.closest("[data-action]");
+    if (!actionEl) return;
+    const action = actionEl.dataset.action;
+    const id = actionEl.dataset.id;
+    if (action === "toggle-dept") {
+      e.preventDefault();
+      e.stopPropagation();
+      if (openDeptIds.has(id)) openDeptIds.delete(id);
+      else openDeptIds.add(id);
+      renderRoster();
+      return;
+    }
+    if (action === "nav-view" || action === "go-auto") {
+      setView(action === "go-auto" ? "auto" : actionEl.dataset.view);
+      return;
+    }
+    if (action === "close-modal") { closeModal(); return; }
+    if (action === "export-excel-btn") { exportExcel(); return; }
+    if (action === "export-json-btn") {
+      downloadFile("面试官轮值排班数据.json", JSON.stringify(state, null, 2), "application/json");
+      showToast("已导出 JSON", "ok");
+      return;
+    }
+    if (action === "reset") { resetToSeed(); return; }
+    if (action === "fill-upcoming") { fillUpcoming(); return; }
+    if (action === "clear-auto") {
+      if (confirm("确定清空所有未锁定名额？")) clearAutoAssignments();
+      return;
+    }
+    if (action === "reset-cursor") {
+      if (confirm("确定重置轮值指针？")) resetCursor();
+      return;
+    }
+    if (action === "skip-current") { skipCurrentRotation(); return; }
+    if (action === "cal-prev") {
+      calendarWeekStart = addDays(calendarWeekStart || todayIso(), -7);
+      renderCalendar();
+      return;
+    }
+    if (action === "cal-next") {
+      calendarWeekStart = addDays(calendarWeekStart || todayIso(), 7);
+      renderCalendar();
+      return;
+    }
+    if (action === "cal-today") {
+      calendarWeekStart = startOfWeekIso(todayIso());
+      renderCalendar();
+      return;
+    }
+    if (action === "cal-view") {
+      calendarView = actionEl.dataset.view;
+      renderCalendar();
+      return;
+    }
+    if (action === "calendar-filter") {
+      calendarFilter = actionEl.dataset.filter;
+      renderCalendar();
+      return;
+    }
+    if (action === "records-filter") {
+      recordsFilter = actionEl.dataset.filter;
+      renderRecords();
+      return;
+    }
+    if (action === "complete-todo") {
+      const session = state.sessions.find((s) => s.id === id);
+      if (session) {
+        if (!sessionUnlocked(session)) { showToast("场次已锁定，请先解锁", "warn"); return; }
+        if (actionEl.dataset.step === "form") session.formConfirmed = true;
+        if (actionEl.dataset.step === "ticket") session.ticketReady = true;
+        saveAndRender();
+        showToast("已完成，待办已更新", "ok");
+      }
+      return;
+    }
+    if (action === "undo-todo") {
+      const session = state.sessions.find((s) => s.id === id);
+      if (!session) return;
+      if (!sessionUnlocked(session)) { showToast("场次已锁定，请先解锁", "warn"); return; }
+      const step = actionEl.dataset.step;
+      if (step === "schedule" && !confirm("确定撤回排班？将清空本场未锁定的面试官。")) return;
+      if (step === "form") session.formConfirmed = false;
+      if (step === "ticket") session.ticketReady = false;
+      if (step === "notice") session.notified = false;
+      if (step === "schedule") session.interviewers = (session.interviewers || []).filter((iv) => iv.locked);
+      saveAndRender();
+      showToast("已撤回，待办已恢复", "ok");
+      return;
+    }
+    if (action === "enable-notify") { enableGroupReminder(); return; }
+    if (action === "generate-sessions") {
+      const count = Math.max(1, parseInt($("#genCount").value, 10) || 4);
+      const start = $("#genStart").value || todayIso();
+      generateSessions(count, start);
+      return;
+    }
+    if (action === "save-settings") { saveSettings(); return; }
+    if (action === "add-session") { addSession(); return; }
+    if (action === "edit-session") { openSessionModal(id); return; }
+    if (action === "copy-notice") {
+      const session = id === "new" ? draftSession : state.sessions.find((s) => s.id === id);
+      if (session) {
+        if (id !== "new") {
+          session.notified = true;
+          saveState();
+        }
+        const dl = sendDeadlineForSession(session);
+        copyText(buildNoticeText(session), `通知已复制，本场请在 ${dl ? deadlineLabel(dl) : "周一/周三 15:00"} 前发到【集团职能中心直属群】`);
+      }
+      return;
+    }
+    if (action === "fill-session") {
+      if (id === "new") {
+        if (!draftSession) return;
+        const cursorBackup = deepClone(state.cursors);
+        state.sessions.push(draftSession);
+        const result = fillSession(draftSession);
+        state.sessions = state.sessions.filter((s) => s.id !== draftSession.id);
+        draftCursorSnapshot = deepClone(state.cursors);
+        state.cursors = cursorBackup;
+        draftHostAdvanced = false;
+        openSessionModal("new");
+        showToast(`已排 ${result.filled} 人`, result.warnings.length ? "warn" : "ok");
+        return;
+      }
+      const session = state.sessions.find((s) => s.id === id);
+      if (!session) return;
+      if (!sessionUnlocked(session)) { showToast("场次已锁定，请先解锁", "warn"); return; }
+      const result = fillSession(session);
+      const fromModal = Boolean(actionEl.closest(".modal"));
+      if (fromModal) {
+        openSessionModal(id);
+      } else if (currentView === "schedule") {
+        saveAndRender();
+      } else {
+        closeModal();
+        saveAndRender();
+      }
+      showToast(`已排 ${result.filled} 人`, result.warnings.length ? "warn" : "ok");
+      return;
+    }
+    if (action === "save-session") { saveSessionFromModal(); return; }
+    if (action === "delete-session") { deleteSession(id); return; }
+    if (action === "add-slot") {
+      const session = selectedSessionId === "new" ? draftSession : state.sessions.find((s) => s.id === selectedSessionId);
+      if (!session) return;
+      const slots = session.interviewers || [];
+      const next = slots.length ? Math.max(...slots.map((x) => x.slot)) + 1 : 0;
+      session.interviewers = [...slots, { slot: next, deptId: "", personId: "", locked: false }];
+      openSessionModal(selectedSessionId);
+      return;
+    }
+    if (action === "add-person") { addPerson(id); return; }
+    if (action === "delete-person") { deletePerson(id); return; }
+    if (action === "toggle-person") { togglePerson(id); return; }
+    if (action === "add-unavailable") { addUnavailable(id); return; }
+    if (action === "save-unavailable") { saveUnavailable(id); return; }
+    if (action === "clear-unavailable") { clearUnavailable(id); return; }
+    if (action === "add-dept") { addDept(); return; }
+    if (action === "save-add-dept") { saveAddDept(); return; }
+    if (action === "add-host") { addHost(); return; }
+    if (action === "delete-dept") { deleteDept(id); return; }
+    if (action === "move-dept-up") { moveDept(id, -1); return; }
+    if (action === "move-dept-down") { moveDept(id, 1); return; }
+    if (action === "toggle-host") {
+      const h = findHost(id);
+      if (h) { h.enabled = !h.enabled; saveAndRender(); }
+      return;
+    }
+    if (action === "toggle-organizer") {
+      const o = findOrganizer(id);
+      if (o) { o.enabled = !o.enabled; saveAndRender(); }
+      return;
+    }
+    if (action === "toggle") {
+      const btn = actionEl;
+      btn.classList.toggle("on");
+      btn.dataset.on = btn.classList.contains("on") ? "1" : "0";
+      btn.setAttribute("aria-checked", btn.classList.contains("on") ? "true" : "false");
+      return;
+    }
+    if (action === "confirm-prompt") {
+      const cb = window.__promptCallback;
+      const value = $("#promptValue")?.value || "";
+      closeModal();
+      if (cb) cb(value);
+      window.__promptCallback = null;
+      return;
+    }
+  });
+
+  document.addEventListener("change", (e) => {
+    const el = e.target;
+    if (el.id === "scheduleSearch") {
+      scheduleQuery = el.value;
+      renderSchedule();
+      return;
+    }
+    if (el.id === "scheduleStatusFilter") {
+      scheduleStatus = el.value;
+      renderSchedule();
+      return;
+    }
+    if (el.id === "calDate") {
+      calendarWeekStart = startOfWeekIso(el.value);
+      renderCalendar();
+      return;
+    }
+    if (el.classList.contains("slot-dept")) {
+      refreshModalSlotPeople();
+      return;
+    }
+    const path = el.dataset.path;
+    if (path) {
+      setByPath(path, el.value, el.dataset.type || "string");
+      saveAndRender();
+    }
+  });
+
+  document.addEventListener("input", (e) => {
+    const el = e.target;
+    if (el.id === "scheduleSearch") {
+      scheduleQuery = el.value;
+      clearTimeout(window.__searchTimer);
+      window.__searchTimer = setTimeout(() => renderSchedule(), 180);
+      return;
+    }
+    if (el.id === "genCount") {
+      const btn = document.getElementById("genBtn");
+      if (btn) {
+        const count = Math.max(1, parseInt(el.value, 10) || 1);
+        btn.innerHTML = `<i data-lucide="calendar-plus"></i>生成未来 ${count} 场`;
+        if (window.lucide) window.lucide.createIcons(btn);
+      }
+    }
+  });
+
+  document.getElementById("globalSearch").addEventListener("input", (e) => {
+    scheduleQuery = e.target.value;
+    if (currentView === "calendar") {
+      clearTimeout(window.__globalSearchTimer);
+      window.__globalSearchTimer = setTimeout(() => renderCalendar(), 180);
+    }
+  });
+
+  document.getElementById("globalSearch").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      scheduleQuery = e.target.value.trim();
+      if (currentView !== "calendar") setView("calendar");
+      else renderCalendar();
+    }
+  });
+
+  $$(".nav-item").forEach((btn) => btn.addEventListener("click", () => setView(btn.dataset.view)));
+
+  window.addEventListener("storage", (event) => {
+    if (event.key === STORAGE_KEY && event.newValue) {
+      try {
+        state = normalizeState(JSON.parse(event.newValue));
+        markPassedSessions();
+        renderCurrentView();
+        showToast("已同步其他标签页的更新", "ok");
+      } catch (err) {
+        console.warn("同步失败", err);
+      }
+    }
+  });
+
+  async function initServerMode() {
+    try {
+      const res = await fetch("/api/state");
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data && data.departments && data.sessions) {
+        serverMode = true;
+        state = normalizeState(data);
+        markPassedSessions();
+        saveState();
+        renderCurrentView();
+        const el = document.getElementById("serverStatus");
+        if (el) {
+          el.textContent = "服务器同步中";
+          el.style.color = "var(--green)";
+        }
+        setInterval(pollServerState, 4000);
+      }
+    } catch (err) {
+      console.warn("服务器不可用，使用本地模式", err);
+      const el = document.getElementById("serverStatus");
+      if (el) {
+        el.textContent = "本地模式";
+        el.style.color = "var(--muted)";
+      }
+    }
+  }
+
+  async function pollServerState() {
+    if (!serverMode) return;
+    if (document.getElementById("modalRoot").innerHTML) return;
+    try {
+      const res = await fetch("/api/state");
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data && data.departments && data.sessions) {
+        const local = JSON.stringify(state);
+        const remote = JSON.stringify(data);
+        if (remote !== local) {
+          state = normalizeState(data);
+          markPassedSessions();
+          renderCurrentView();
+        }
+      }
+    } catch (err) {
+      console.warn("同步失败", err);
+    }
+  }
+
+  state = loadState();
+  markPassedSessions();
+  saveState();
+  setView("dashboard");
+  initServerMode();
+  setInterval(() => {
+    if (markPassedSessions()) renderCurrentView();
+  }, 60000);
+})();
+
+</script>
+</body>
+</html>

@@ -2525,7 +2525,7 @@ window.SEED_DATA = {
       name = nameMatch ? nameMatch[1].trim() : (rawCandidate || "待定");
     }
     const mode = (session.mode || "").trim();
-    const form = mode === "线下" ? "**线下**" : "**腾讯会议**（会议号由主持人私聊发送）";
+    const form = mode === "线下" ? "线下" : "腾讯会议（会议号由主持人私聊发送）";
     const host = hostDisplayName(session) || "xxx";
     const interviewerLines = (session.interviewers || [])
       .filter((iv) => iv.personId && iv.deptId)
@@ -2536,28 +2536,28 @@ window.SEED_DATA = {
       });
     const interviewerBlock = interviewerLines.length ? interviewerLines.map((line) => ` • ${line}`).join("\n") : " • 待定";
     return [
-      "📣 **【竞聘通知｜外聘区域总监】**",
+      "📣 【竞聘通知｜外聘区域总监】",
       "",
       "各位领导、同事：",
       "",
-      region ? `现安排**${region}外聘区域总监候选人【${name}】**进行线上竞聘，具体安排如下：` : `现安排**外聘区域总监候选人【${name}】**进行线上竞聘，具体安排如下：`,
+      region ? `现安排${region}外聘区域总监候选人【${name}】进行线上竞聘，具体安排如下：` : `现安排外聘区域总监候选人【${name}】进行线上竞聘，具体安排如下：`,
       "",
-      "🕑 **竞聘时间**",
-      ` **${fmtDateShortWeekday(session.date)}${timeDisplay}**`,
+      "🕑 竞聘时间",
+      ` ${fmtDateShortWeekday(session.date)}${timeDisplay}`,
       "",
-      "👤 **竞聘人员**",
-      ` **${name}**`,
+      "👤 竞聘人员",
+      ` ${name}`,
       "",
-      "💻 **竞聘形式**",
+      "💻 竞聘形式",
       ` ${form}`,
       "",
-      "🎙️ **竞聘主持**",
-      ` 人力发展中心 **${host}**`,
+      "🎙️ 竞聘主持",
+      ` 人力发展中心 ${host}`,
       "",
-      "👥 **面试官**",
+      "👥 面试官",
       interviewerBlock,
       "",
-      "📌 **温馨提示**",
+      "📌 温馨提示",
       " 请各位面试官提前安排好时间，准时参会。",
     ].join("\n");
   }

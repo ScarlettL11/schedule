@@ -461,7 +461,6 @@ table.grid-table {
 .recent-list { display: flex; flex-direction: column; }
 .recent-card { padding: 14px 16px; border-bottom: 1px solid var(--border); }
 .recent-card:last-child { border-bottom: 0; }
-.recent-card { cursor: pointer; }
 .recent-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .recent-head strong { font-size: 14px; }
 .recent-candidate { margin-top: 6px; font-weight: 600; }
@@ -2811,7 +2810,7 @@ window.SEED_DATA = {
       if (progress.label === "待通知") warnings.push("通知尚未发送");
       if (sessionHasPausedPerson(s)) warnings.push("暂停面试官被安排");
       return `
-        <div class="recent-card" data-action="open-session-card" data-id="${esc(s.id)}">
+        <div class="recent-card">
           <div class="recent-head">
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
               <strong>${fmtDateShortWeekday(s.date)} · ${esc(s.time)}</strong>
@@ -2827,6 +2826,7 @@ window.SEED_DATA = {
           ${sessionTodoHtml(s)}
           <div style="display:flex;gap:6px;flex-wrap:wrap">
             <button class="btn small blue" data-action="copy-notice" data-id="${esc(s.id)}"><i data-lucide="copy"></i>复制通知</button>
+            <button class="btn small" data-action="edit-session" data-id="${esc(s.id)}"><i data-lucide="pencil"></i>编辑场次</button>
           </div>
         </div>
       `;
@@ -4454,11 +4454,6 @@ window.SEED_DATA = {
     if (!actionEl) return;
     const action = actionEl.dataset.action;
     const id = actionEl.dataset.id;
-    if (action === "open-session-card") {
-      if (e.target.closest("button")) return;
-      openSessionModal(id);
-      return;
-    }
     if (action === "toggle-dept") {
       e.preventDefault();
       e.stopPropagation();

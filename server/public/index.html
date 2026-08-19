@@ -2574,8 +2574,6 @@ window.SEED_DATA = {
     const interviewerBlock = interviewerLines.length ? interviewerLines.map((line) => ` • ${line}`).join("\n") : " • 待定";
     if (type === "interviewer") {
       return [
-        "给面试官",
-        "",
         `负责人好，本期区域总监竞聘将安排在${dateLabel}${tomorrowTag} ${startTime}开始，具体信息如下：`,
         "",
         `一、竞聘时间：${dateLabel} ${timeDisplay}`,
@@ -2595,8 +2593,6 @@ window.SEED_DATA = {
     }
     if (type === "candidate") {
       return [
-        "给应聘者",
-        "",
         "您好，邀请您参加区域总监岗位总部竞聘：",
         "",
         `【时间】${dateLabel} ${timeDisplay}`,
@@ -2605,9 +2601,9 @@ window.SEED_DATA = {
         "1、请提前10分钟至会议室外等候/至16楼前台签到，迟到15分钟以上视为放弃竞聘",
         "2、请您着工装/商务正装、戴工牌出席，更好地展现您的专业形象",
         "3、竞聘分为两个环节：",
-        "①自我介绍/个人述职环节：请在X分钟内进行自我介绍/个人述职，包含但不限于：学历，个人优劣势，过往工作经历，规划等；",
+        "①自我介绍/个人述职环节：请在5分钟内进行自我介绍/个人述职，包含但不限于：学历，个人优劣势，过往工作经历，规划等；",
         "②面试官提问环节：请竞聘者回答问题时保持声音洪亮。",
-        "如有特殊情况反馈或任何疑问，可私聊XX中心XX。",
+        `如有特殊情况反馈或任何疑问，可私聊人力发展中心【${host}】。`,
       ].join("\n");
     }
     return [
@@ -2759,8 +2755,8 @@ window.SEED_DATA = {
     const items = sessionProcessItems(session);
     const done = sessionProcessDone(session);
     const pendingHtml = items.map((item) => {
-      const action = item.action === "mark-form" || item.action === "mark-ticket" ? "complete-todo" : item.action === "notice" ? "copy-notice" : "edit-session";
-      const step = item.action === "mark-form" || item.action === "mark-ticket" ? item.step : "";
+      const action = item.action === "mark-form" || item.action === "mark-ticket" || item.action === "notice" ? "complete-todo" : "edit-session";
+      const step = item.action === "mark-form" || item.action === "mark-ticket" || item.action === "notice" ? item.step : "";
       return `
         <div class="card-todo">
           <span>${esc(item.label)}</span>
@@ -2831,7 +2827,6 @@ window.SEED_DATA = {
           ${sessionTodoHtml(s)}
           <div style="display:flex;gap:6px;flex-wrap:wrap">
             <button class="btn small blue" data-action="copy-notice" data-id="${esc(s.id)}"><i data-lucide="copy"></i>复制通知</button>
-            <button class="btn small" data-action="edit-session" data-id="${esc(s.id)}"><i data-lucide="eye"></i>面试官名单</button>
           </div>
         </div>
       `;
@@ -2862,7 +2857,7 @@ window.SEED_DATA = {
         </div>
       </div>
       <div class="panel" style="margin-top:14px">
-        <div class="panel-head"><h2>场次概览</h2><span class="sub">共 ${overviewSessions.length} 场待开展，临近在前；每场待办直接处理</span><button class="btn small ghost" data-action="nav-view" data-view="calendar">查看日历</button></div>
+        <div class="panel-head"><h2>场次概览</h2><span class="sub">共 ${overviewSessions.length} 场待开展，临近在前</span><button class="btn small ghost" data-action="nav-view" data-view="calendar">查看日历</button></div>
         <div class="recent-list">${recentCards}</div>
       </div>
     `;
@@ -3159,6 +3154,52 @@ window.SEED_DATA = {
     });
   }
 
+  function openRosterFilterList(filter) {
+    const now = new Date();
+    const monthSessions = state.sessions.filter((s) => {
+      const d = parseDate(s.date);
+      return d && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    });
+    const monthPeople = new Set(monthSessions.flatMap((s) => (s.interviewers || []).map((iv) => iv.personId)));
+    const stats = computeStats();
+    const rows = [];
+    for (const dept of orderedDepartments()) {
+      for (const p of dept.people) {
+        if (filter === "active" && !p.enabled) continue;
+        if (filter === "paused" && p.enabled) continue;
+        if (filter === "month" && !monthPeople.has(p.id)) continue;
+        const monthCount = monthSessions.reduce((n, s) => n + (s.interviewers || []).filter((iv) => iv.personId === p.id).length, 0);
+        rows.push(`<tr>
+          <td>${esc(p.name)}</td>
+          <td>${esc(dept.name)}</td>
+          <td>${esc(p.role || "-")}</td>
+          <td>${p.enabled ? "正常" : "暂停"}</td>
+          <td class="num">${monthCount}</td>
+          <td>${stats.lastDate[p.id] ? fmtDateShort(stats.lastDate[p.id]) : "-"}</td>
+        </tr>`);
+      }
+    }
+    const labels = { all: "全部面试官", active: "轮值中面试官", paused: "暂停面试官", month: "本月已安排面试官" };
+    openModal(`
+      <div class="modal-backdrop">
+        <div class="modal" style="width:720px">
+          <div class="modal-head">
+            <h2>${labels[filter] || "面试官名单"}</h2>
+            <button class="btn ghost icon-only" data-action="close-modal"><i data-lucide="x"></i></button>
+          </div>
+          <div class="modal-body">
+            <div class="table-wrap">
+              <table class="grid-table">
+                <thead><tr><th>姓名</th><th>所属中心</th><th>职级</th><th>状态</th><th>本月场次</th><th>最近面试</th></tr></thead>
+                <tbody>${rows.join("") || '<tr><td colspan="6"><div class="empty">暂无人员</div></td></tr>'}</tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    `);
+  }
+
   function renderRoster() {
     const root = $("#view-roster");
     const stats = computeStats();
@@ -3172,6 +3213,7 @@ window.SEED_DATA = {
       const d = parseDate(s.date);
       return d && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
     });
+    const monthPeople = new Set(monthSessions.flatMap((s) => (s.interviewers || []).map((iv) => iv.personId)));
     root.innerHTML = `
       <div class="page-head">
         <div>
@@ -3180,10 +3222,10 @@ window.SEED_DATA = {
         <button class="btn primary" data-action="add-dept"><i data-lucide="folder-plus"></i>新增部门</button>
       </div>
       <div class="stat-grid">
-        <div class="stat"><div class="label">全部</div><div class="value">${allPeople.length}</div></div>
-        <div class="stat"><div class="label">轮值中</div><div class="value">${activePeople}</div></div>
-        <div class="stat amber"><div class="label">暂停</div><div class="value">${pausedPeople}</div></div>
-        <div class="stat"><div class="label">本月已安排</div><div class="value">${monthSessions.length}</div><div class="hint">场次</div></div>
+        <div class="stat" data-action="roster-filter-list" data-filter="all" style="cursor:pointer"><div class="label">全部</div><div class="value">${allPeople.length}</div><div class="hint">点击查看名单</div></div>
+        <div class="stat" data-action="roster-filter-list" data-filter="active" style="cursor:pointer"><div class="label">轮值中</div><div class="value">${activePeople}</div><div class="hint">点击查看名单</div></div>
+        <div class="stat amber" data-action="roster-filter-list" data-filter="paused" style="cursor:pointer"><div class="label">暂停</div><div class="value">${pausedPeople}</div><div class="hint">点击查看名单</div></div>
+        <div class="stat" data-action="roster-filter-list" data-filter="month" style="cursor:pointer"><div class="label">本月已安排</div><div class="value">${monthPeople.size}</div><div class="hint">点击查看名单</div></div>
       </div>
       <div class="stack">
         ${departments.map((dept) => {
@@ -4477,12 +4519,17 @@ window.SEED_DATA = {
       renderRecords();
       return;
     }
+    if (action === "roster-filter-list") {
+      openRosterFilterList(actionEl.dataset.filter);
+      return;
+    }
     if (action === "complete-todo") {
       const session = state.sessions.find((s) => s.id === id);
       if (session) {
         if (!sessionUnlocked(session)) { showToast("场次已锁定，请先解锁", "warn"); return; }
         if (actionEl.dataset.step === "form") session.formConfirmed = true;
         if (actionEl.dataset.step === "ticket") session.ticketReady = true;
+        if (actionEl.dataset.step === "notice") session.notified = true;
         saveAndRender();
         showToast("已完成，待办已更新", "ok");
       }
@@ -4680,11 +4727,23 @@ window.SEED_DATA = {
 
   $$(".nav-item").forEach((btn) => btn.addEventListener("click", () => setView(btn.dataset.view)));
 
+  document.addEventListener("toggle", (e) => {
+    if (e.target && e.target.classList && e.target.classList.contains("dept-block")) {
+      const btn = e.target.querySelector('[data-action="toggle-dept"]');
+      const id = btn && btn.dataset.id;
+      if (id) {
+        if (e.target.open) openDeptIds.add(id);
+        else openDeptIds.delete(id);
+      }
+    }
+  });
+
   window.addEventListener("storage", (event) => {
     if (event.key === STORAGE_KEY && event.newValue) {
       try {
         state = normalizeState(JSON.parse(event.newValue));
         markPassedSessions();
+        syncOpenDepts();
         renderCurrentView();
         showToast("已同步其他标签页的更新", "ok");
       } catch (err) {
@@ -4774,6 +4833,7 @@ window.SEED_DATA = {
       if (remote && remote.departments && remote.sessions && JSON.stringify(remote) !== JSON.stringify(state)) {
         state = normalizeState(remote);
         markPassedSessions();
+        syncOpenDepts();
         renderCurrentView();
       }
     } catch (err) {
@@ -4794,6 +4854,7 @@ window.SEED_DATA = {
         if (remote !== local) {
           state = normalizeState(data);
           markPassedSessions();
+          syncOpenDepts();
           renderCurrentView();
         }
       }

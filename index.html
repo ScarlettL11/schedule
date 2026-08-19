@@ -3154,6 +3154,11 @@ window.SEED_DATA = {
     });
   }
 
+  function isEditing() {
+    const el = document.activeElement;
+    return el && ["INPUT", "SELECT", "TEXTAREA"].includes(el.tagName);
+  }
+
   function openRosterFilterList(filter) {
     const now = new Date();
     const monthSessions = state.sessions.filter((s) => {
@@ -4735,6 +4740,7 @@ window.SEED_DATA = {
 
   window.addEventListener("storage", (event) => {
     if (event.key === STORAGE_KEY && event.newValue) {
+      if (isEditing()) return;
       try {
         state = normalizeState(JSON.parse(event.newValue));
         markPassedSessions();
@@ -4814,7 +4820,7 @@ window.SEED_DATA = {
 
   async function pollSupabaseState() {
     if (!serverMode || !SUPABASE_URL || !SUPABASE_KEY) return;
-    if (document.getElementById("modalRoot").innerHTML) return;
+    if (document.getElementById("modalRoot").innerHTML || isEditing()) return;
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/state?select=data&id=eq.1`, {
         headers: {
@@ -4838,7 +4844,7 @@ window.SEED_DATA = {
 
   async function pollServerState() {
     if (!serverMode || (SUPABASE_URL && SUPABASE_KEY)) return;
-    if (document.getElementById("modalRoot").innerHTML) return;
+    if (document.getElementById("modalRoot").innerHTML || isEditing()) return;
     try {
       const res = await fetch(`${API_BASE}/api/state`);
       if (!res.ok) return;
@@ -4864,7 +4870,7 @@ window.SEED_DATA = {
   setView("dashboard");
   initServerMode();
   setInterval(() => {
-    if (markPassedSessions()) renderCurrentView();
+    if (markPassedSessions() && !isEditing()) renderCurrentView();
   }, 60000);
 })();
 

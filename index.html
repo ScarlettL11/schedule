@@ -2444,6 +2444,19 @@ window.SEED_DATA = {
       });
     } catch (err) {
       console.warn("Supabase 保存失败", err);
+      showToast("服务器保存失败，请检查网络后重新保存", "error");
+    }
+  }
+
+  function saveStateNow() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (err) {
+      console.warn("本地保存失败", err);
+    }
+    if (serverMode) {
+      clearTimeout(serverSaveTimer);
+      saveToSupabase();
     }
   }
 
@@ -2460,7 +2473,7 @@ window.SEED_DATA = {
   }
 
   function saveAndRender() {
-    saveState();
+    saveStateNow();
     markPassedSessions();
     syncOpenDepts();
     renderCurrentView();
@@ -4869,6 +4882,12 @@ window.SEED_DATA = {
   saveState();
   setView("dashboard");
   initServerMode();
+  window.addEventListener("beforeunload", () => {
+    if (serverSaveTimer) {
+      clearTimeout(serverSaveTimer);
+      saveToSupabase();
+    }
+  });
   setInterval(() => {
     if (markPassedSessions() && !isEditing()) renderCurrentView();
   }, 60000);

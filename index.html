@@ -2428,6 +2428,7 @@ window.SEED_DATA = {
   function saveAndRender() {
     saveState();
     markPassedSessions();
+    syncOpenDepts();
     renderCurrentView();
   }
 
@@ -3088,6 +3089,16 @@ window.SEED_DATA = {
     `;
   }
 
+  function syncOpenDepts() {
+    document.querySelectorAll("#view-roster details.dept-block").forEach((details) => {
+      const btn = details.querySelector('[data-action="toggle-dept"]');
+      const id = btn && btn.dataset.id;
+      if (!id) return;
+      if (details.open) openDeptIds.add(id);
+      else openDeptIds.delete(id);
+    });
+  }
+
   function renderRoster() {
     const root = $("#view-roster");
     const stats = computeStats();
@@ -3372,6 +3383,9 @@ window.SEED_DATA = {
     const root = $("#view-auto");
     const latest = sortSessions(state.sessions).slice(-1)[0];
     const defaultStart = addDays(latest ? latest.date : todayIso(), 1);
+    const defaultParts = (state.settings.defaultTime || "14:00-14:40").split("-");
+    const defaultTimeStart = (defaultParts[0] || "14:00").trim();
+    const defaultTimeEnd = (defaultParts[1] || "14:40").trim();
     root.innerHTML = `
       <div class="page-head">
         <div>
@@ -3403,7 +3417,11 @@ window.SEED_DATA = {
               </div>
               <div class="field">
                 <label>默认时间</label>
-                <input class="input" id="cfgTime" value="${esc(state.settings.defaultTime)}">
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                  <input class="input" type="time" id="cfgTimeStart" value="${esc(defaultTimeStart)}" style="flex:1;min-width:110px">
+                  <span style="color:var(--muted)">至</span>
+                  <input class="input" type="time" id="cfgTimeEnd" value="${esc(defaultTimeEnd)}" style="flex:1;min-width:110px">
+                </div>
               </div>
               <div class="field">
                 <label>默认模式</label>
@@ -4306,7 +4324,9 @@ window.SEED_DATA = {
     state.settings.hostPerSession = Math.max(0, parseInt($("#cfgHost").value, 10) || 0);
     const orgEl = document.getElementById("cfgOrg");
     state.settings.organizerPerSession = orgEl ? Math.max(0, parseInt(orgEl.value, 10) || 0) : 0;
-    state.settings.defaultTime = $("#cfgTime").value.trim() || "14:00-14:40";
+    const timeStart = $("#cfgTimeStart")?.value || "14:00";
+    const timeEnd = $("#cfgTimeEnd")?.value || "14:40";
+    state.settings.defaultTime = `${timeStart}-${timeEnd}`;
     state.settings.defaultMode = $("#cfgMode").value.trim() || "腾讯会议";
     state.settings.lockPassword = $("#cfgLockPwd")?.value.trim() || "123456";
     state.settings.weekdays = $$(".weekday-cb").filter((cb) => cb.checked).map((cb) => Number(cb.value));

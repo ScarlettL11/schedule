@@ -461,11 +461,15 @@ table.grid-table {
 .recent-list { display: flex; flex-direction: column; }
 .recent-card { padding: 14px 16px; border-bottom: 1px solid var(--border); }
 .recent-card:last-child { border-bottom: 0; }
+.recent-card { cursor: pointer; }
 .recent-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .recent-head strong { font-size: 14px; }
 .recent-candidate { margin-top: 6px; font-weight: 600; }
 .recent-meta { margin-top: 4px; color: var(--muted); font-size: 13px; }
 .warn-line { margin: 8px 0; color: var(--amber); font-size: 12px; }
+.card-todos { margin: 8px 0; display: flex; flex-direction: column; gap: 4px; }
+.card-todo { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel-soft); font-size: 13px; }
+.card-todo.done { color: var(--muted); }
 
 .todo-list { padding: 4px 16px 12px; }
 .todo-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
@@ -830,7 +834,7 @@ window.SEED_DATA = {
   "meta": {
     "title": "外聘区域总监面试官轮值排班",
     "source": "外聘区域总监面试官轮班表（竞聘）.xlsx",
-    "generatedAt": "2026-08-17T22:44:57"
+    "generatedAt": "2026-08-19T15:23:02"
   },
   "settings": {
     "headsPerSession": 2,
@@ -1203,14 +1207,6 @@ window.SEED_DATA = {
       "unavailable": []
     },
     {
-      "id": "host_yh",
-      "name": "和雨涵",
-      "enabled": true,
-      "note": "主持人",
-      "maxConsecutive": 1,
-      "unavailable": []
-    },
-    {
       "id": "host_jj",
       "name": "陆俊杰",
       "enabled": true,
@@ -1221,6 +1217,14 @@ window.SEED_DATA = {
     {
       "id": "host_sm",
       "name": "刘思铭",
+      "enabled": true,
+      "note": "主持人",
+      "maxConsecutive": 1,
+      "unavailable": []
+    },
+    {
+      "id": "host_yh",
+      "name": "和雨涵",
       "enabled": true,
       "note": "主持人",
       "maxConsecutive": 1,
@@ -1907,6 +1911,14 @@ window.SEED_DATA = {
     return items;
   }
 
+  function sessionProcessItems(session) {
+    return processTodos().filter((item) => item.session.id === session.id);
+  }
+
+  function sessionProcessDone(session) {
+    return processDoneTodos().filter((item) => item.session.id === session.id);
+  }
+
   function computeStats() {
     const sessions = sortSessions(state.sessions.filter((s) => s.status !== "已取消" && (s.interviewers || []).length > 0));
     const total = {};
@@ -2077,6 +2089,29 @@ window.SEED_DATA = {
     const avoidPersons = new Set(excludedPersons);
     const selectedPersonIds = new Set(excludedPersons);
     const headSelectedIds = new Set();
+    let headsUsed = 0;
+    let assistantsUsed = 0;
+    const jicaiDept = ordered.find((d) => d.id === "jicai" && !excludedDeptSet.has(d.id));
+    if (jicaiDept) {
+      let forcedRole = null;
+      if (headsUsed < headQuota && canSupply(jicaiDept, "head")) forcedRole = "head";
+      else if (assistantsUsed < assistantQuota && canSupply(jicaiDept, "assistant")) forcedRole = "assistant";
+      if (forcedRole) {
+        const forcedPerson = pickPersonForDeptRole(jicaiDept, session, avoidPersons, forcedRole);
+        if (forcedPerson) {
+          selected.push({ dept: jicaiDept, person: forcedPerson, orderIndex: deptIndexMap.get(jicaiDept.id) });
+          selectedDeptIds.add(jicaiDept.id);
+          avoidPersons.add(forcedPerson.id);
+          selectedPersonIds.add(forcedPerson.id);
+          if (forcedRole === "head") {
+            headsUsed += 1;
+            headSelectedIds.add(jicaiDept.id);
+          } else {
+            assistantsUsed += 1;
+          }
+        }
+      }
+    }
 
     function pickFromQueue(queue, startIdx, role, quota, allowHeadFallback) {
       const picked = [];
@@ -2121,10 +2156,10 @@ window.SEED_DATA = {
       return { picked, nextIndex: idx };
     }
 
-    const headResult = pickFromQueue(headDepts, headIdx, "head", headQuota);
-    const assistantResult = pickFromQueue(assistantDepts, assistantIdx, "assistant", assistantQuota);
-    if (assistantResult.picked.length < assistantQuota) {
-      const missing = assistantQuota - assistantResult.picked.length;
+    const headResult = pickFromQueue(headDepts, headIdx, "head", headQuota - headsUsed);
+    const assistantResult = pickFromQueue(assistantDepts, assistantIdx, "assistant", assistantQuota - assistantsUsed);
+    if (assistantResult.picked.length < assistantQuota - assistantsUsed) {
+      const missing = assistantQuota - assistantsUsed - assistantResult.picked.length;
       const fallback = pickFromQueue(assistantDepts, assistantResult.nextIndex, "assistant", missing, true);
       assistantResult.picked.push(...fallback.picked);
       assistantResult.nextIndex = fallback.nextIndex;
@@ -2133,8 +2168,8 @@ window.SEED_DATA = {
     state.cursors.assistantIndex = assistantResult.nextIndex;
     selected.push(...headResult.picked, ...assistantResult.picked);
     if (warnings) {
-      if (headResult.picked.length < headQuota) warnings.push(`还差 ${headQuota - headResult.picked.length} 位中心负责人`);
-      if (assistantResult.picked.length < assistantQuota) warnings.push(`还差 ${assistantQuota - assistantResult.picked.length} 位助理`);
+      if (headsUsed + headResult.picked.length < headQuota) warnings.push(`还差 ${headQuota - headsUsed - headResult.picked.length} 位中心负责人`);
+      if (assistantsUsed + assistantResult.picked.length < assistantQuota) warnings.push(`还差 ${assistantQuota - assistantsUsed - assistantResult.picked.length} 位助理`);
     }
     return selected;
   }
@@ -2512,22 +2547,23 @@ window.SEED_DATA = {
     return !session.locked || Boolean(window.__unlockedSessions && window.__unlockedSessions.has(session.id));
   }
 
-  function buildNoticeText(session) {
+  function buildNoticeText(session, type) {
     const timeDisplay = (session.time || "14:00-14:40").trim().replace("-", "–");
+    const startTime = (session.time || "14:00-14:40").split("-")[0].trim();
+    const dateLabel = fmtDateShortWeekday(session.date);
+    const sessionDate = parseDate(session.date);
+    const tomorrowTag = sessionDate && dateKey(sessionDate) === addDays(todayIso(), 1) ? "（明日）" : "";
+    const mode = (session.mode || "").trim();
+    const location = mode === "线下" ? "总部会议室1601" : "线上会议";
     const rawCandidate = (session.candidates || "").split("\n").map((s) => s.trim()).find(Boolean) || "";
     const candidateMatch = rawCandidate.match(/(.+?)外聘区域总监【(.+?)】/);
-    let region = "";
     let name = "";
-    if (candidateMatch) {
-      region = candidateMatch[1].trim();
-      name = candidateMatch[2].trim();
-    } else {
+    if (candidateMatch) name = candidateMatch[2].trim();
+    else {
       const nameMatch = rawCandidate.match(/【(.+?)】/);
       name = nameMatch ? nameMatch[1].trim() : (rawCandidate || "待定");
     }
-    const mode = (session.mode || "").trim();
-    const form = mode === "线下" ? "线下" : "腾讯会议（会议号由主持人私聊发送）";
-    const host = hostDisplayName(session) || "xxx";
+    const host = hostDisplayName(session) || "xx";
     const interviewerLines = (session.interviewers || [])
       .filter((iv) => iv.personId && iv.deptId)
       .map((iv) => {
@@ -2536,31 +2572,83 @@ window.SEED_DATA = {
         return `${dept ? dept.name : "未知中心"} ${person ? person.name : "未知"}`;
       });
     const interviewerBlock = interviewerLines.length ? interviewerLines.map((line) => ` • ${line}`).join("\n") : " • 待定";
+    if (type === "interviewer") {
+      return [
+        "给面试官",
+        "",
+        `负责人好，本期区域总监竞聘将安排在${dateLabel}${tomorrowTag} ${startTime}开始，具体信息如下：`,
+        "",
+        `一、竞聘时间：${dateLabel} ${timeDisplay}`,
+        `二、竞聘地点：${location}`,
+        "三、面试官：",
+        interviewerBlock,
+        "面试官提问不设顺序，原则上每位面试官均应提问。",
+        "四、注意事项：",
+        "1）请您着工装/商务正装出席，更好的展现您的专业形象。",
+        "2）请您提前2分钟入会，熟悉应聘者简历情况，交流提问分工，考核更精准。",
+        "3）请您在自己提问时开启视频摄像头，他人提问时可无需开启。",
+        "4）考核过程中请您提前安排好工作、保持在线。",
+        "面试官未着工装/商务正装出席、迟到/早退、竞聘开始前30分钟临时请假、面试过程中不认真（如看手机、接打电话、打瞌睡等）的，下调行为绩效档数2档。",
+        "五、竞聘人员信息（相关详细信息见附件，请提前查阅哟）",
+        "附件链接：xxx",
+      ].join("\n");
+    }
+    if (type === "candidate") {
+      return [
+        "给应聘者",
+        "",
+        "您好，邀请您参加区域总监岗位总部竞聘：",
+        "",
+        `【时间】${dateLabel} ${timeDisplay}`,
+        `【地点】${mode === "线下" ? "乐有家控股集团总部1601会议室（安吉尔大厦16楼）" : "线上会议链接"}`,
+        "【温馨提示】：",
+        "1、请提前10分钟至会议室外等候/至16楼前台签到，迟到15分钟以上视为放弃竞聘",
+        "2、请您着工装/商务正装、戴工牌出席，更好地展现您的专业形象",
+        "3、竞聘分为两个环节：",
+        "①自我介绍/个人述职环节：请在X分钟内进行自我介绍/个人述职，包含但不限于：学历，个人优劣势，过往工作经历，规划等；",
+        "②面试官提问环节：请竞聘者回答问题时保持声音洪亮。",
+        "如有特殊情况反馈或任何疑问，可私聊XX中心XX。",
+      ].join("\n");
+    }
     return [
-      "📣 【竞聘通知｜外聘区域总监】",
+      "外聘竞聘通知",
       "",
-      "各位领导、同事：",
+      `竞聘时间：${fmtDateCn(session.date)} ${timeDisplay}`,
+      `竞聘地点：${location}`,
+      `竞聘主持人：人力发展中心${host}`,
       "",
-      region ? `现安排${region}外聘区域总监候选人【${name}】进行线上竞聘，具体安排如下：` : `现安排外聘区域总监候选人【${name}】进行线上竞聘，具体安排如下：`,
-      "",
-      "🕑 竞聘时间",
-      ` ${fmtDateShortWeekday(session.date)}${timeDisplay}`,
-      "",
-      "👤 竞聘人员",
-      ` ${name}`,
-      "",
-      "💻 竞聘形式",
-      ` ${form}`,
-      "",
-      "🎙️ 竞聘主持",
-      ` 人力发展中心 ${host}`,
-      "",
-      "👥 面试官",
-      interviewerBlock,
-      "",
-      "📌 温馨提示",
-      " 请各位面试官提前安排好时间，准时参会。",
+      "请各位面试官确认，若有调整请优先部门内调整，需要协助的请乐聊主持人",
     ].join("\n");
+  }
+
+  function openNoticeTemplateModal(session) {
+    const templates = [
+      ["interviewer", "给面试官", "面试官通知模板，含注意事项与着装要求"],
+      ["candidate", "给应聘者", "应聘者通知模板，含时间、地点、温馨提示"],
+      ["group", "给职能群", "外聘竞聘通知，用于群里发布确认"],
+    ];
+    openModal(`
+      <div class="modal-backdrop">
+        <div class="modal" style="width:520px">
+          <div class="modal-head">
+            <h2>选择通知模板</h2>
+            <button class="btn ghost icon-only" data-action="close-modal"><i data-lucide="x"></i></button>
+          </div>
+          <div class="modal-body">
+            <div style="display:flex;flex-direction:column;gap:10px">
+              ${templates.map(([type, label, desc]) => `
+                <button class="btn" style="justify-content:flex-start;height:auto;padding:12px 14px" data-action="copy-template" data-type="${type}" data-id="${esc(session.id)}">
+                  <div style="text-align:left">
+                    <strong>${label}</strong>
+                    <div style="color:var(--muted);font-size:12px;margin-top:2px">${desc}</div>
+                  </div>
+                </button>
+              `).join("")}
+            </div>
+          </div>
+        </div>
+      </div>
+    `);
   }
 
   function nextGroupDeadline() {
@@ -2667,6 +2755,29 @@ window.SEED_DATA = {
     return `<button class="switch ${on ? "on" : ""}" data-action="${esc(action)}" data-id="${esc(id)}" data-on="${on ? 1 : 0}" type="button" role="switch" aria-checked="${on ? "true" : "false"}"></button>`;
   }
 
+  function sessionTodoHtml(session) {
+    const items = sessionProcessItems(session);
+    const done = sessionProcessDone(session);
+    const pendingHtml = items.map((item) => {
+      const action = item.action === "mark-form" || item.action === "mark-ticket" ? "complete-todo" : item.action === "notice" ? "copy-notice" : "edit-session";
+      const step = item.action === "mark-form" || item.action === "mark-ticket" ? item.step : "";
+      return `
+        <div class="card-todo">
+          <span>${esc(item.label)}</span>
+          <button class="btn small blue" data-action="${action}" data-step="${step}" data-id="${esc(session.id)}">处理</button>
+        </div>
+      `;
+    }).join("");
+    const doneHtml = done.map((item) => `
+      <div class="card-todo done">
+        <span>✓ ${esc(item.label)}</span>
+        <button class="btn small ghost" data-action="undo-todo" data-step="${esc(item.step)}" data-id="${esc(session.id)}">撤回</button>
+      </div>
+    `).join("");
+    if (!pendingHtml && !doneHtml) return "";
+    return `<div class="card-todos">${pendingHtml}${doneHtml}</div>`;
+  }
+
   // ---------- view rendering ----------
 
   function renderCurrentView() {
@@ -2692,15 +2803,7 @@ window.SEED_DATA = {
     const weekCount = sessions.filter((s) => s.date >= weekStart && s.date <= weekEnd).length;
     const pendingConfirm = sessions.filter((s) => sessionProgress(s).label === "待确认").length;
     const pendingNotice = sessions.filter((s) => sessionProgress(s).label === "待通知").length;
-    const upcoming = sortSessions(sessions.filter((s) => s.status === "待安排" && !sessionIsPassed(s))).slice(0, 3);
     const overviewSessions = sortSessions(sessions.filter((s) => s.status === "待安排" && !sessionIsPassed(s)));
-    const todos = processTodos().slice(0, 12);
-    const doneTodos = processDoneTodos().slice(0, 12);
-    const monthSessions = sessions.filter((s) => {
-      const d = parseDate(s.date);
-      const now = new Date();
-      return d && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-    }).length;
 
     const recentCards = overviewSessions.length ? overviewSessions.map((s) => {
       const progress = sessionProgress(s);
@@ -2712,7 +2815,7 @@ window.SEED_DATA = {
       if (progress.label === "待通知") warnings.push("通知尚未发送");
       if (sessionHasPausedPerson(s)) warnings.push("暂停面试官被安排");
       return `
-        <div class="recent-card">
+        <div class="recent-card" data-action="open-session-card" data-id="${esc(s.id)}">
           <div class="recent-head">
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
               <strong>${fmtDateShortWeekday(s.date)} · ${esc(s.time)}</strong>
@@ -2725,39 +2828,14 @@ window.SEED_DATA = {
           <div class="recent-meta">面试官：${personChips(s)}</div>
           <div class="recent-meta">主持人：${esc(hostDisplayName(s)) || "未确认"}</div>
           ${warnings.length ? `<div class="warn-line">${warnings.map((w) => "⚠️ " + w).join(" · ")}</div>` : ""}
+          ${sessionTodoHtml(s)}
           <div style="display:flex;gap:6px;flex-wrap:wrap">
             <button class="btn small blue" data-action="copy-notice" data-id="${esc(s.id)}"><i data-lucide="copy"></i>复制通知</button>
-            <button class="btn small" data-action="edit-session" data-id="${esc(s.id)}"><i data-lucide="eye"></i>查看详情</button>
+            <button class="btn small" data-action="edit-session" data-id="${esc(s.id)}"><i data-lucide="eye"></i>面试官名单</button>
           </div>
         </div>
       `;
     }).join("") : '<div class="empty"><div class="big">暂无待开展场次</div><p>可以在右上角“新增竞聘”添加场次。</p></div>';
-
-    const todoHtml = todos.length ? todos.map((item) => `
-      <div class="todo-item">
-        <span class="todo-mark">⚠️</span>
-        <div class="todo-text">
-          <div class="todo-step-main">${esc(item.label)}</div>
-          <div class="todo-tags"><span class="chip neutral">${fmtDateShort(item.session.date)} · ${esc(candidateShortName(item.session))}</span></div>
-        </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="btn small blue" data-action="${item.action === "mark-form" || item.action === "mark-ticket" ? "complete-todo" : item.action === "notice" ? "copy-notice" : "edit-session"}" data-step="${item.action === "mark-form" || item.action === "mark-ticket" ? item.step : ""}" data-id="${esc(item.session.id)}">处理</button>
-        </div>
-      </div>
-    `).join("") : '<div class="todo-item todo-clear"><span class="todo-mark">✓</span><div class="todo-text">当前没有需要处理的排班事项</div></div>';
-    const doneHtml = doneTodos.length ? `
-      <div class="todo-group">已完成（可撤回）</div>
-      ${doneTodos.map((item) => `
-        <div class="todo-item todo-done">
-          <span class="todo-mark">✓</span>
-          <div class="todo-text">
-            <div class="todo-step-main">${esc(item.label)}</div>
-            <div class="todo-tags"><span class="chip neutral">${fmtDateShort(item.session.date)} · ${esc(candidateShortName(item.session))}</span></div>
-          </div>
-          <button class="btn small ghost" data-action="undo-todo" data-step="${esc(item.step)}" data-id="${esc(item.session.id)}">撤回</button>
-        </div>
-      `).join("")}
-    ` : "";
 
     root.innerHTML = `
       <div class="page-head">
@@ -2783,27 +2861,9 @@ window.SEED_DATA = {
           <p style="margin:6px 0 0">群通知提醒：复制通知后，请于每周一、周三 15:00 前发到【集团职能中心直属群】。</p>
         </div>
       </div>
-      <div class="grid-2">
-        <div class="panel">
-          <div class="panel-head"><h2>场次概览</h2><span class="sub">共 ${overviewSessions.length} 场待开展，临近在前</span><button class="btn small ghost" data-action="nav-view" data-view="calendar">查看日历</button></div>
-          <div class="recent-list">${recentCards}</div>
-        </div>
-        <div class="panel">
-          <div class="panel-head"><h2>本场轮值面试官</h2><button class="btn small ghost" data-action="nav-view" data-view="calendar">查看日历</button></div>
-          <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">
-            ${upcoming[0] ? `
-              <div class="rotation-now"><span>日期时间</span><strong>${fmtDateCn(upcoming[0].date)} ${esc(upcoming[0].time)}</strong></div>
-              <div class="rotation-now"><span>竞聘人员</span><strong>${esc(upcoming[0].candidates || "待定")}</strong></div>
-              <div class="rotation-now"><span>主持人</span><strong>${esc(hostDisplayName(upcoming[0])) || "未确认"}</strong></div>
-              <div>${personChips(upcoming[0])}</div>
-              <div class="rule-note" style="margin-top:4px"><i data-lucide="info"></i><div><p>本月已安排 ${monthSessions} 场</p></div></div>
-            ` : '<div class="empty">暂无待开展场次</div>'}
-          </div>
-        </div>
-      </div>
       <div class="panel" style="margin-top:14px">
-        <div class="panel-head"><h2>待处理事项</h2><span class="sub">共 ${todos.length} 项</span></div>
-        <div class="todo-list">${todoHtml}${doneHtml}</div>
+        <div class="panel-head"><h2>场次概览</h2><span class="sub">共 ${overviewSessions.length} 场待开展，临近在前；每场待办直接处理</span><button class="btn small ghost" data-action="nav-view" data-view="calendar">查看日历</button></div>
+        <div class="recent-list">${recentCards}</div>
       </div>
     `;
   }
@@ -3979,7 +4039,7 @@ window.SEED_DATA = {
       })).filter((h) => h.name);
     }
     if (!hosts.length) {
-      hosts = ["连思嘉", "彭魁博", "和雨涵", "陆俊杰", "刘思铭"].map((name, i) => ({
+      hosts = ["连思嘉", "彭魁博", "陆俊杰", "刘思铭", "和雨涵"].map((name, i) => ({
         id: "host_" + i,
         name,
         enabled: true,
@@ -4068,7 +4128,19 @@ window.SEED_DATA = {
     const p = findPerson(id);
     if (!p) return;
     p.enabled = !p.enabled;
-    saveAndRender();
+    saveState();
+    if (currentView === "roster") {
+      const btn = document.querySelector(`[data-action="toggle-person"][data-id="${id}"]`);
+      if (btn) {
+        btn.classList.toggle("on", p.enabled);
+        btn.dataset.on = p.enabled ? "1" : "0";
+        btn.setAttribute("aria-checked", p.enabled ? "true" : "false");
+        const label = btn.closest(".field.check")?.querySelector("span");
+        if (label) label.textContent = p.enabled ? "启用" : "暂停";
+      }
+    } else {
+      renderCurrentView();
+    }
   }
 
   function deletePerson(id) {
@@ -4340,6 +4412,11 @@ window.SEED_DATA = {
     if (!actionEl) return;
     const action = actionEl.dataset.action;
     const id = actionEl.dataset.id;
+    if (action === "open-session-card") {
+      if (e.target.closest("button")) return;
+      openSessionModal(id);
+      return;
+    }
     if (action === "toggle-dept") {
       e.preventDefault();
       e.stopPropagation();
@@ -4439,12 +4516,21 @@ window.SEED_DATA = {
       if (id === "new") syncDraftFromModal();
       const session = id === "new" ? draftSession : state.sessions.find((s) => s.id === id);
       if (session) {
+        openNoticeTemplateModal(session);
+      }
+      return;
+    }
+    if (action === "copy-template") {
+      const session = id === "new" ? draftSession : state.sessions.find((s) => s.id === id);
+      if (session) {
         if (id !== "new") {
           session.notified = true;
           saveState();
         }
-        const dl = sendDeadlineForSession(session);
-        copyText(buildNoticeText(session), `通知已复制，本场请在 ${dl ? deadlineLabel(dl) : "周一/周三 15:00"} 前发到【集团职能中心直属群】`);
+        const type = actionEl.dataset.type || "group";
+        const label = type === "interviewer" ? "给面试官" : type === "candidate" ? "给应聘者" : "给职能群";
+        copyText(buildNoticeText(session, type), `${label}通知已复制`);
+        closeModal();
       }
       return;
     }

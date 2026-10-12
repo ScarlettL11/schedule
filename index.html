@@ -608,17 +608,17 @@ table.grid-table {
 .roster-lane-title strong { display: block; font-size: 15px; }
 .roster-lane-title small { display: block; color: var(--muted); font-size: 12px; }
 .roster-lane-actions { display: flex; gap: 6px; }
-.roster-lane-body { display: flex; flex-direction: column; }
-.roster-person-card { display: flex; align-items: center; gap: 10px; min-height: 54px; padding: 8px 14px; border-top: 1px solid var(--border); }
+.roster-lane-body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 20px; padding: 0 14px; }
+.roster-person-card { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 62px; padding: 8px 0; border-top: 1px solid var(--border); }
 .roster-person-card:first-child { border-top: 0; }
-.roster-person-head { display: flex; align-items: center; flex: 1; min-width: 0; gap: 8px; }
-.roster-person-name { min-width: 110px; font-weight: 650; }
-.roster-person-tools { display: flex; align-items: center; gap: 5px; }
+.roster-person-head { display: flex; align-items: center; flex: 1; min-width: 0; gap: 6px; flex-wrap: wrap; }
+.roster-person-name { flex: 1 1 72px; min-width: 72px; font-weight: 650; }
+.roster-person-tools { display: flex; align-items: center; gap: 4px; }
 .roster-drag-handle { display: inline-grid; width: 28px; height: 30px; place-items: center; color: var(--muted); cursor: grab; touch-action: none; border-radius: 5px; }
 .roster-drag-handle:hover { background: var(--panel-soft); }
 .roster-drag-handle:active { cursor: grabbing; }
 .roster-drag-handle svg { width: 16px; height: 16px; }
-.roster-person-foot { display: flex; align-items: center; gap: 8px; min-width: 230px; color: var(--muted); font-size: 12px; }
+.roster-person-foot { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--muted); font-size: 12px; white-space: nowrap; }
 .roster-empty { padding: 16px; color: var(--muted); text-align: center; border-top: 1px dashed var(--border-strong); font-size: 13px; }
 .roster-support { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .roster-support-box { min-width: 0; display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
@@ -804,6 +804,7 @@ table.grid-table {
   .topbar-actions .btn span { display: none; }
   .brand-sub { display: none; }
   .roster-support { grid-template-columns: 1fr; }
+  .roster-lane-body { grid-template-columns: 1fr; }
   .roster-person-card { align-items: flex-start; flex-wrap: wrap; }
   .roster-person-head { flex-basis: 100%; }
   .roster-person-name { flex: 1; }
@@ -3541,7 +3542,7 @@ window.SEED_DATA = {
         <div class="page-head roster-head">
           <div>
             <h1 class="page-title">面试官</h1>
-            <p class="page-desc">按部门纵向浏览；拖动人员到其他部门即可换部门，也可点箭头选择。移出名单会归档，历史场次姓名继续保留。</p>
+            <p class="page-desc">各部门面试官分左右两列展示；拖动人员到其他部门即可换部门，也可点箭头选择。移出名单会归档，历史场次姓名继续保留。</p>
             <div class="roster-summary">${allPeople.length} 位面试官 · ${departments.length} 个部门 · ${pausedPeople} 位暂停</div>
           </div>
           <button class="btn primary" data-action="add-dept"><i data-lucide="folder-plus"></i>新增部门</button>

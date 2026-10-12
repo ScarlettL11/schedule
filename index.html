@@ -594,46 +594,39 @@ table.grid-table {
 .person-note { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .count-line { color: var(--muted); font-size: 12px; }
 
-/* Roster is a horizontal board: department changes stay in one compact view. */
-.roster-page { height: calc(100vh - 118px); min-height: 0; display: flex; flex-direction: column; gap: 8px; }
-.roster-head { flex: 0 0 auto; align-items: center; margin: 0; }
-.roster-head .page-desc { margin: 2px 0 0; }
-.roster-summary { color: var(--muted); font-size: 12px; margin-top: 4px; }
-.roster-page > .stat-grid { flex: 0 0 auto; grid-template-columns: repeat(4, minmax(110px, 1fr)); gap: 6px; margin: 0; }
-.roster-page > .stat-grid .stat { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 42px; padding: 5px 9px; }
-.roster-page > .stat-grid .stat .value { margin: 0; font-size: 20px; }
-.roster-page > .stat-grid .stat .hint { display: none; }
-.roster-board { display: flex; align-items: stretch; gap: 10px; min-height: 0; flex: 1 1 auto; overflow-x: auto; overflow-y: hidden; padding: 2px 2px 8px; overscroll-behavior-x: contain; }
-.roster-lane { display: flex; flex: 0 0 258px; min-width: 258px; flex-direction: column; overflow: hidden; border: 1px solid var(--border); border-radius: 9px; background: var(--panel-soft); scroll-snap-align: start; }
-.roster-lane.drop-target { outline: 2px dashed var(--accent); outline-offset: -3px; background: var(--accent-soft); }
-.roster-lane-head { display: flex; align-items: flex-start; gap: 8px; padding: 10px; border-bottom: 1px solid var(--border); background: var(--panel); }
-.roster-lane-head .dept-color { height: 34px; }
+/* Roster uses familiar vertical department sections with compact person rows. */
+.roster-page { display: flex; flex-direction: column; gap: 14px; }
+.roster-head { align-items: center; }
+.roster-head .page-desc { margin: 4px 0 0; }
+.roster-summary { color: var(--muted); font-size: 12px; margin-top: 5px; }
+.roster-board { display: flex; flex-direction: column; gap: 12px; }
+.roster-lane { overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel); }
+.roster-lane.drop-target { outline: 2px dashed var(--accent); outline-offset: 2px; background: var(--accent-soft); }
+.roster-lane-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--border); background: var(--panel-soft); }
+.roster-lane-head .dept-color { height: 38px; }
 .roster-lane-title { min-width: 0; flex: 1; }
-.roster-lane-title strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
-.roster-lane-title small { display: block; color: var(--muted); font-size: 11px; }
-.roster-lane-actions { display: flex; gap: 4px; }
-.roster-lane-actions .btn { min-height: 28px; padding: 3px 6px; }
-.roster-lane-body { display: flex; flex: 1; min-height: 0; flex-direction: column; gap: 7px; overflow-y: auto; padding: 8px; }
-.roster-person-card { border: 1px solid var(--border); border-radius: 7px; background: var(--panel); padding: 7px 8px; box-shadow: 0 1px 2px rgba(74,42,20,.04); }
-.roster-person-head { display: flex; align-items: center; gap: 5px; }
-.roster-person-name { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 650; }
-.roster-person-tools { display: flex; align-items: center; gap: 3px; }
-.roster-person-tools .btn { min-width: 26px; min-height: 26px; padding: 3px; }
-.roster-person-tools .switch { transform: scale(.82); transform-origin: center; }
-.roster-drag-handle { display: inline-grid; width: 24px; height: 26px; place-items: center; color: var(--muted); cursor: grab; touch-action: none; }
+.roster-lane-title strong { display: block; font-size: 15px; }
+.roster-lane-title small { display: block; color: var(--muted); font-size: 12px; }
+.roster-lane-actions { display: flex; gap: 6px; }
+.roster-lane-body { display: flex; flex-direction: column; }
+.roster-person-card { display: flex; align-items: center; gap: 10px; min-height: 54px; padding: 8px 14px; border-top: 1px solid var(--border); }
+.roster-person-card:first-child { border-top: 0; }
+.roster-person-head { display: flex; align-items: center; flex: 1; min-width: 0; gap: 8px; }
+.roster-person-name { min-width: 110px; font-weight: 650; }
+.roster-person-tools { display: flex; align-items: center; gap: 5px; }
+.roster-drag-handle { display: inline-grid; width: 28px; height: 30px; place-items: center; color: var(--muted); cursor: grab; touch-action: none; border-radius: 5px; }
+.roster-drag-handle:hover { background: var(--panel-soft); }
 .roster-drag-handle:active { cursor: grabbing; }
-.roster-drag-handle svg { width: 15px; height: 15px; }
-.roster-person-foot { display: flex; align-items: center; justify-content: space-between; gap: 5px; margin-top: 3px; color: var(--muted); font-size: 10px; white-space: nowrap; }
-.roster-person-foot span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.roster-empty { display: grid; flex: 1; min-height: 78px; place-items: center; color: var(--muted); border: 1px dashed var(--border-strong); border-radius: 7px; font-size: 12px; }
-.roster-support { flex: 0 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.roster-support-box { min-width: 0; display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); border-radius: 8px; padding: 6px 9px; }
-.roster-support-box > strong { flex: 0 0 auto; font-size: 12px; }
-.roster-support-list { display: flex; align-items: center; gap: 5px; min-width: 0; overflow-x: auto; }
-.roster-support-person { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; border-radius: 6px; background: var(--panel-soft); padding: 3px 6px; font-size: 11px; }
-.roster-support-person .switch { transform: scale(.72); transform-origin: center; }
+.roster-drag-handle svg { width: 16px; height: 16px; }
+.roster-person-foot { display: flex; align-items: center; gap: 8px; min-width: 230px; color: var(--muted); font-size: 12px; }
+.roster-empty { padding: 16px; color: var(--muted); text-align: center; border-top: 1px dashed var(--border-strong); font-size: 13px; }
+.roster-support { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.roster-support-box { min-width: 0; display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
+.roster-support-box > strong { flex: 0 0 auto; font-size: 13px; }
+.roster-support-list { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.roster-support-person { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; border-radius: 6px; background: var(--panel-soft); padding: 4px 7px; font-size: 12px; }
 .roster-support-person .num { color: var(--muted); }
-.roster-archived-hint { color: var(--muted); font-size: 11px; margin-left: auto; white-space: nowrap; }
+.roster-archived-hint { color: var(--muted); font-size: 12px; }
 
 .modal-backdrop {
   position: fixed;
@@ -803,16 +796,18 @@ table.grid-table {
   .topbar { flex-wrap: wrap; height: auto; padding: 10px 14px; }
   .person-row { grid-template-columns: 1fr 1fr; }
   .slot-row { grid-template-columns: 40px 1fr; }
-  .roster-page { height: calc(100vh - 190px); min-height: 0; }
+  .roster-page { height: auto; min-height: 0; }
 }
 
 @media (max-width: 640px) {
   .main { padding: 14px 12px 32px; }
   .topbar-actions .btn span { display: none; }
   .brand-sub { display: none; }
-  .roster-page { height: calc(100vh - 180px); min-height: 0; }
-  .roster-lane { flex-basis: 238px; min-width: 238px; }
   .roster-support { grid-template-columns: 1fr; }
+  .roster-person-card { align-items: flex-start; flex-wrap: wrap; }
+  .roster-person-head { flex-basis: 100%; }
+  .roster-person-name { flex: 1; }
+  .roster-person-foot { padding-left: 36px; min-width: 0; }
 }
 
 </style>
@@ -3365,7 +3360,7 @@ window.SEED_DATA = {
         <div class="page-head roster-head">
           <div>
             <h1 class="page-title">面试官</h1>
-            <p class="page-desc">左右浏览部门；拖动卡片即可换部门，也可点箭头选择。删除会归档，历史场次姓名继续保留。</p>
+            <p class="page-desc">按部门纵向浏览；拖动人员到其他部门即可换部门，也可点箭头选择。移出名单会归档，历史场次姓名继续保留。</p>
             <div class="roster-summary">${allPeople.length} 位面试官 · ${departments.length} 个部门 · ${pausedPeople} 位暂停</div>
           </div>
           <button class="btn primary" data-action="add-dept"><i data-lucide="folder-plus"></i>新增部门</button>
@@ -3376,7 +3371,7 @@ window.SEED_DATA = {
           <div class="stat amber" data-action="roster-filter-list" data-filter="paused" style="cursor:pointer"><div class="label">暂停</div><div class="value">${pausedPeople}</div><div class="hint">点击查看名单</div></div>
           <div class="stat" data-action="roster-filter-list" data-filter="month" style="cursor:pointer"><div class="label">本月已安排</div><div class="value">${monthPeople.size}</div><div class="hint">点击查看名单</div></div>
         </div>
-        <div class="roster-board" aria-label="部门面试官拖拽看板">
+        <div class="roster-board" aria-label="部门面试官名单">
           ${departments.map((dept) => {
             const assign = state.sessions.reduce((n, s) => n + (s.interviewers || []).filter((iv) => iv.deptId === dept.id).length, 0);
             return `
@@ -3407,8 +3402,8 @@ window.SEED_DATA = {
                             <button class="btn small ghost icon-only" data-action="edit-person" data-id="${esc(p.id)}" title="人员设置"><i data-lucide="pencil"></i></button>
                             <button class="btn small ghost icon-only danger-text" data-action="delete-person" data-id="${esc(p.id)}" title="移出名单"><i data-lucide="user-round-x"></i></button>
                           </span>
+                          <span class="roster-person-foot"><span>${esc(p.role || "未设岗位")} · 累计 ${stats.total[p.id] || 0} · 本月 ${monthCount}</span>${unavailableCount ? `<span>不可用 ${unavailableCount}段</span>` : ""}</span>
                         </div>
-                        <div class="roster-person-foot"><span>${esc(p.role || "未设岗位")} · 累计 ${stats.total[p.id] || 0} · 本月 ${monthCount}</span><span>${unavailableCount ? `不可用 ${unavailableCount}段` : ""}</span></div>
                       </article>
                     `;
                   }).join("") || `<div class="roster-empty">拖动面试官到这里</div>`}

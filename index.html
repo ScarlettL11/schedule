@@ -3456,9 +3456,9 @@ window.SEED_DATA = {
 
   function renderRecords() {
     const root = $("#view-records");
-    const records = sortSessionsDesc(state.sessions.filter((s) => s.status === "已开展" || s.status === "已取消"));
+    const records = sortSessionsDesc(state.sessions);
     const filtered = recordsFilter === "all" ? records : records.filter((s) => s.status === recordsFilter);
-    const filterButtons = [["all", "全部"], ["已开展", "已完成"], ["已取消", "已取消"]].map(([value, label]) =>
+    const filterButtons = [["all", "全部"], ["待安排", "待开展"], ["已开展", "已完成"], ["已取消", "已取消"]].map(([value, label]) =>
       `<button class="btn small ${recordsFilter === value ? "primary" : "ghost"}" data-action="records-filter" data-filter="${value}">${label}</button>`
     ).join("");
     root.innerHTML = `

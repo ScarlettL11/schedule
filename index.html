@@ -841,14 +841,20 @@ table.grid-table {
         <button class="nav-item active" data-view="dashboard">
           <i data-lucide="layout-dashboard"></i><span>工作台</span>
         </button>
+        <button class="nav-item" data-view="schedule">
+          <i data-lucide="list-checks"></i><span>排班表</span>
+        </button>
         <button class="nav-item" data-view="calendar">
           <i data-lucide="calendar-days"></i><span>排班日历</span>
+        </button>
+        <button class="nav-item" data-view="records">
+          <i data-lucide="clipboard-list"></i><span>竞聘记录</span>
         </button>
         <button class="nav-item" data-view="roster">
           <i data-lucide="users"></i><span>面试官</span>
         </button>
-        <button class="nav-item" data-view="records">
-          <i data-lucide="clipboard-list"></i><span>竞聘记录</span>
+        <button class="nav-item" data-view="auto">
+          <i data-lucide="settings-2"></i><span>规则设置</span>
         </button>
       </nav>
       <div class="sidebar-foot">
@@ -858,10 +864,14 @@ table.grid-table {
 
     <main class="main">
       <section id="view-dashboard" class="view active"></section>
+      <section id="view-schedule" class="view"></section>
       <section id="view-calendar" class="view"></section>
-      <section id="view-roster" class="view"></section>
       <section id="view-records" class="view"></section>
+      <section id="view-roster" class="view"></section>
       <section id="view-auto" class="view"></section>
+      <section id="view-overview" class="view"></section>
+      <section id="view-rotation" class="view"></section>
+      <section id="view-process" class="view"></section>
     </main>
   </div>
 
@@ -3186,14 +3196,15 @@ window.SEED_DATA = {
           <h1 class="page-title">工作台</h1>
         </div>
         <div class="toolbar" style="margin:0">
+          <button class="btn blue" data-action="nav-view" data-view="schedule"><i data-lucide="list-checks"></i>打开排班表</button>
           <button class="btn ghost" data-action="nav-view" data-view="auto"><i data-lucide="settings-2"></i>自动排班设置</button>
         </div>
       </div>
       <div class="stat-grid">
-        <div class="stat"><div class="label">今日场次</div><div class="value">${todayCount}</div><div class="hint">${todayCount ? "今天有竞聘安排" : "今天暂无场次"}</div></div>
-        <div class="stat amber"><div class="label">待确认</div><div class="value">${pendingConfirm}</div><div class="hint">缺少面试官或主持人</div></div>
-        <div class="stat amber"><div class="label">待通知</div><div class="value">${pendingNotice}</div><div class="hint">已排好但尚未发送通知</div></div>
-        <div class="stat"><div class="label">本周场次</div><div class="value">${weekCount}</div><div class="hint">${fmtDateShort(weekStart)} - ${fmtDateShort(weekEnd)}</div></div>
+        <div class="stat" data-action="nav-view" data-view="calendar" style="cursor:pointer"><div class="label">今日场次</div><div class="value">${todayCount}</div><div class="hint">${todayCount ? "今天有竞聘安排 · 查看日历" : "今天暂无场次"}</div></div>
+        <div class="stat amber" data-action="nav-view" data-view="schedule" style="cursor:pointer"><div class="label">待确认</div><div class="value">${pendingConfirm}</div><div class="hint">缺少面试官或主持人 · 查看排班</div></div>
+        <div class="stat amber" data-action="nav-view" data-view="schedule" style="cursor:pointer"><div class="label">待通知</div><div class="value">${pendingNotice}</div><div class="hint">已排好但尚未发送通知 · 查看排班</div></div>
+        <div class="stat" data-action="nav-view" data-view="calendar" style="cursor:pointer"><div class="label">本周场次</div><div class="value">${weekCount}</div><div class="hint">${fmtDateShort(weekStart)} - ${fmtDateShort(weekEnd)} · 查看日历</div></div>
       </div>
       <div class="notice-banner" style="margin-top:14px">
         <i data-lucide="info"></i>
@@ -3458,7 +3469,12 @@ window.SEED_DATA = {
     const root = $("#view-records");
     const records = sortSessionsDesc(state.sessions);
     const filtered = recordsFilter === "all" ? records : records.filter((s) => s.status === recordsFilter);
-    const filterButtons = [["all", "全部"], ["待安排", "待开展"], ["已开展", "已完成"], ["已取消", "已取消"]].map(([value, label]) =>
+    const filterButtons = [
+      ["all", `全部（${records.length}）`],
+      ["待安排", `待开展（${records.filter((s) => s.status === "待安排").length}）`],
+      ["已开展", `已完成（${records.filter((s) => s.status === "已开展").length}）`],
+      ["已取消", `已取消（${records.filter((s) => s.status === "已取消").length}）`],
+    ].map(([value, label]) =>
       `<button class="btn small ${recordsFilter === value ? "primary" : "ghost"}" data-action="records-filter" data-filter="${value}">${label}</button>`
     ).join("");
     root.innerHTML = `

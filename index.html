@@ -2733,24 +2733,13 @@ window.SEED_DATA = {
       name = nameMatch ? nameMatch[1].trim() : (rawCandidate || "待定");
     }
     const host = hostDisplayName(session) || "xx";
-    const interviewerLines = (session.interviewers || [])
-      .filter((iv) => iv.personId && iv.deptId)
-      .map((iv) => {
-        const dept = findDept(iv.deptId);
-        const person = findPerson(iv.personId);
-        return `${dept ? dept.name : "未知中心"} ${person ? person.name : "未知"}`;
-      });
-    const interviewerBlock = interviewerLines.length ? interviewerLines.map((line) => ` • ${line}`).join("\n") : " • 待定";
     if (type === "interviewer") {
       return [
         `负责人好，本期区域总监竞聘将安排在${dateLabel}${tomorrowTag} ${startTime}开始，具体信息如下：`,
         "",
         `一、竞聘时间：${dateLabel} ${timeDisplay}`,
         `二、竞聘地点：${location}`,
-        "三、面试官：",
-        interviewerBlock,
-        "面试官提问不设顺序，原则上每位面试官均应提问。",
-        "四、注意事项：",
+        "三、注意事项：",
         "1）请您着工装/商务正装出席，更好的展现您的专业形象。",
         "2）请您提前2分钟入会，熟悉应聘者简历情况，交流提问分工，考核更精准。",
         "3）请您在自己提问时开启视频摄像头，他人提问时可无需开启。",

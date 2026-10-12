@@ -2782,6 +2782,8 @@ window.SEED_DATA = {
       `竞聘地点：${location}`,
       `竞聘主持人：人力发展中心${host}`,
       "",
+      "[图片]",
+      "",
       "请各位面试官确认，若有调整请优先部门内调整，需要协助的请乐聊主持人",
     ].join("\n");
   }
@@ -2790,7 +2792,7 @@ window.SEED_DATA = {
     const templates = [
       ["interviewer", "给面试官", "面试官通知模板，含注意事项与着装要求"],
       ["candidate", "给应聘者", "应聘者通知模板，含时间、地点、温馨提示"],
-      ["group", "给职能群", "外聘竞聘通知，用于群里发布确认"],
+      ["group", "给职能群", "复制通知文字和场次图片，粘贴到群聊"],
     ];
     openModal(`
       <div class="modal-backdrop">
@@ -2916,7 +2918,7 @@ window.SEED_DATA = {
     ta.remove();
   }
 
-  function downloadSessionOverviewImage(session) {
+  function downloadSessionOverviewImage(session, copyNoticeText = null) {
     if (!session) return;
     const scale = 2;
     const width = 1960;
@@ -3044,21 +3046,54 @@ window.SEED_DATA = {
     colX += cols[4].width;
     drawLines(textLines(hostDisplayName(session) || "待定", cols[5].width - cellPad * 2, 22, 600), colX + cellPad, rowCenter, "#49372e", 22, 600);
 
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        showToast("图片生成失败，请重试", "error");
-        return;
+    const blobPromise = new Promise((resolve, reject) => {
+      canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("图片生成失败")), "image/png");
+    });
+    if (copyNoticeText !== null) {
+      const htmlPromise = blobPromise.then((blob) => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const imageUrl = reader.result;
+          const body = copyNoticeText.split("\n").map((line) => line === "[图片]"
+            ? `<p><img src="${imageUrl}" alt="场次概览" style="max-width:100%;height:auto"></p>`
+            : line ? `<p>${esc(line)}</p>` : "<p><br></p>").join("");
+          resolve(new Blob([`<meta charset="utf-8"><div>${body}</div>`], { type: "text/html" }));
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      }));
+      const plainTextBlob = new Blob([copyNoticeText], { type: "text/plain" });
+      try {
+        const item = new ClipboardItem({
+          "text/plain": plainTextBlob,
+          "text/html": htmlPromise,
+          "image/png": blobPromise,
+        }, { presentationStyle: "inline" });
+        navigator.clipboard.write([item]).then(() => {
+          showToast("通知文字和场次图片已复制，可粘贴到群聊", "ok");
+        }).catch(() => {
+          showToast("未能同时复制文字和图片，请检查浏览器剪贴板权限后重试", "error");
+        });
+      } catch (err) {
+        showToast("当前浏览器不支持同时复制文字和图片，请使用最新版 Chrome 或 Edge", "error");
       }
-      const link = document.createElement("a");
-      const url = URL.createObjectURL(blob);
-      link.href = url;
-      link.download = `竞聘场次概览_${session.date || todayIso()}.png`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      showToast("场次概览图片已导出", "ok");
-    }, "image/png");
+      return;
+    }
+    blobPromise.then((blob) => saveSessionImageBlob(blob, session)).catch(() => {
+      showToast("图片生成失败，请重试", "error");
+    });
+  }
+
+  function saveSessionImageBlob(blob, session) {
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.download = `竞聘场次概览_${session.date || todayIso()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast("场次概览图片已导出", "ok");
   }
 
   function deptChip(dept) {
@@ -4920,7 +4955,8 @@ window.SEED_DATA = {
         }
         const type = actionEl.dataset.type || "group";
         const label = type === "interviewer" ? "给面试官" : type === "candidate" ? "给应聘者" : "给职能群";
-        copyText(buildNoticeText(session, type), `${label}通知已复制`);
+        if (type === "group") downloadSessionOverviewImage(session, buildNoticeText(session, type));
+        else copyText(buildNoticeText(session, type), `${label}通知已复制`);
         closeModal();
       }
       return;

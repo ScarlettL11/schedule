@@ -2012,7 +2012,13 @@ window.SEED_DATA = {
 
   function countRole(poolName, id) {
     const key = poolName === "hosts" ? "hostId" : "organizerId";
-    return state.sessions.filter((s) => (poolName === "hosts" ? s.status === "已开展" : s.status !== "已取消") && s[key] === id).length;
+    if (poolName === "hosts") {
+      const host = state.hosts.find((item) => item.id === id);
+      return state.sessions.filter((s) => s.status === "已开展" && (
+        s.hostId === id || (!s.hostId && host && s.hostName === host.name)
+      )).length;
+    }
+    return state.sessions.filter((s) => s.status !== "已取消" && s[key] === id).length;
   }
 
   function consecutiveRoleCount(poolName, id) {

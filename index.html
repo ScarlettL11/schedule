@@ -841,20 +841,14 @@ table.grid-table {
         <button class="nav-item active" data-view="dashboard">
           <i data-lucide="layout-dashboard"></i><span>工作台</span>
         </button>
-        <button class="nav-item" data-view="schedule">
-          <i data-lucide="list-checks"></i><span>排班表</span>
-        </button>
         <button class="nav-item" data-view="calendar">
           <i data-lucide="calendar-days"></i><span>排班日历</span>
-        </button>
-        <button class="nav-item" data-view="records">
-          <i data-lucide="clipboard-list"></i><span>竞聘记录</span>
         </button>
         <button class="nav-item" data-view="roster">
           <i data-lucide="users"></i><span>面试官</span>
         </button>
-        <button class="nav-item" data-view="auto">
-          <i data-lucide="settings-2"></i><span>规则设置</span>
+        <button class="nav-item" data-view="records">
+          <i data-lucide="clipboard-list"></i><span>竞聘记录</span>
         </button>
       </nav>
       <div class="sidebar-foot">
@@ -864,7 +858,6 @@ table.grid-table {
 
     <main class="main">
       <section id="view-dashboard" class="view active"></section>
-      <section id="view-schedule" class="view"></section>
       <section id="view-calendar" class="view"></section>
       <section id="view-records" class="view"></section>
       <section id="view-roster" class="view"></section>
@@ -1715,7 +1708,6 @@ window.SEED_DATA = {
   let currentView = "dashboard";
   let openDeptIds = new Set();
   let scheduleQuery = "";
-  let scheduleStatus = "all";
   let selectedSessionId = null;
   let draftSession = null;
   let calendarWeekStart = null;
@@ -3138,7 +3130,6 @@ window.SEED_DATA = {
     if (currentView === "calendar") renderCalendar();
     if (currentView === "records") renderRecords();
     if (currentView === "overview") renderOverview();
-    if (currentView === "schedule") renderSchedule();
     if (currentView === "roster") renderRoster();
     if (currentView === "rotation") renderRotation();
     if (currentView === "auto") renderAuto();
@@ -3196,14 +3187,13 @@ window.SEED_DATA = {
           <h1 class="page-title">工作台</h1>
         </div>
         <div class="toolbar" style="margin:0">
-          <button class="btn blue" data-action="nav-view" data-view="schedule"><i data-lucide="list-checks"></i>打开排班表</button>
           <button class="btn ghost" data-action="nav-view" data-view="auto"><i data-lucide="settings-2"></i>自动排班设置</button>
         </div>
       </div>
       <div class="stat-grid">
         <div class="stat" data-action="nav-view" data-view="calendar" style="cursor:pointer"><div class="label">今日场次</div><div class="value">${todayCount}</div><div class="hint">${todayCount ? "今天有竞聘安排 · 查看日历" : "今天暂无场次"}</div></div>
-        <div class="stat amber" data-action="nav-view" data-view="schedule" style="cursor:pointer"><div class="label">待确认</div><div class="value">${pendingConfirm}</div><div class="hint">缺少面试官或主持人 · 查看排班</div></div>
-        <div class="stat amber" data-action="nav-view" data-view="schedule" style="cursor:pointer"><div class="label">待通知</div><div class="value">${pendingNotice}</div><div class="hint">已排好但尚未发送通知 · 查看排班</div></div>
+        <div class="stat amber" data-action="nav-view" data-view="records" data-filter="待安排" style="cursor:pointer"><div class="label">待确认</div><div class="value">${pendingConfirm}</div><div class="hint">缺少面试官或主持人 · 查看待安排场次</div></div>
+        <div class="stat amber" data-action="nav-view" data-view="records" data-filter="待安排" style="cursor:pointer"><div class="label">待通知</div><div class="value">${pendingNotice}</div><div class="hint">已排好但尚未发送通知 · 查看待安排场次</div></div>
         <div class="stat" data-action="nav-view" data-view="calendar" style="cursor:pointer"><div class="label">本周场次</div><div class="value">${weekCount}</div><div class="hint">${fmtDateShort(weekStart)} - ${fmtDateShort(weekEnd)} · 查看日历</div></div>
       </div>
       <div class="notice-banner" style="margin-top:14px">
@@ -3243,7 +3233,7 @@ window.SEED_DATA = {
       <div class="panel">
         <div class="panel-head">
           <h2>最近一次安排</h2>
-          <button class="btn small ghost" data-action="nav-view" data-view="schedule">查看全部</button>
+          <button class="btn small ghost" data-action="nav-view" data-view="records">查看全部</button>
         </div>
         <div class="table-wrap">
           <table class="grid-table">
@@ -3365,103 +3355,6 @@ window.SEED_DATA = {
         <span style="color:var(--muted);font-size:12px">本周 ${weekSessions.length} 场</span>
       </div>
       <div class="panel">${calendarView === "week" ? weekHtml : listHtml}</div>
-    `;
-  }
-
-  function renderSchedule() {
-    const root = $("#view-schedule");
-    const all = sortSessions(state.sessions);
-    const pending = all.filter((s) => s.status === "待安排");
-    const history = sortSessionsDesc(all.filter((s) => s.status !== "待安排"));
-    const q = scheduleQuery.trim().toLowerCase();
-    const matchQuery = (s) => !q ||
-      `${s.date} ${s.time} ${s.mode} ${s.candidates} ${s.note}`.toLowerCase().includes(q) ||
-      (s.interviewers || []).some((iv) => {
-        const p = findPerson(iv.personId);
-        return p && p.name.toLowerCase().includes(q);
-      });
-    const pendingList = pending.filter(matchQuery);
-    const historyList = history.filter(matchQuery);
-    const nextSession = pendingList[0];
-    const needAuto = pendingList.some((s) => !sessionIsFull(s));
-
-    const rowHtml = (s, highlight) => `
-      <tr style="${highlight ? "background:var(--accent-soft)" : ""}">
-        <td class="date-cell">${fmtDateCn(s.date)}</td>
-        <td>${esc(s.time)}</td>
-        <td style="max-width:220px">${esc(s.candidates || "-")}</td>
-        <td style="max-width:420px">${personChips(s)}</td>
-        <td>${esc(hostDisplayName(s)) || "-"}</td>
-        <td style="max-width:180px">${esc(s.note || "-")}</td>
-        <td>${statusPill(s.status)}</td>
-        <td>
-          <div style="display:flex;gap:6px">
-            <button class="btn small" data-action="edit-session" data-id="${esc(s.id)}"><i data-lucide="pencil"></i>编辑</button>
-            ${s.status === "待安排" ? `<button class="btn small blue" data-action="copy-notice" data-id="${esc(s.id)}"><i data-lucide="copy"></i>复制通知</button>` : ""}
-            ${s.status === "待安排" && !sessionIsFull(s) ? `<button class="btn small blue" data-action="fill-session" data-id="${esc(s.id)}"><i data-lucide="wand-2"></i>按规则排班</button>` : ""}
-          </div>
-        </td>
-      </tr>
-    `;
-
-    root.innerHTML = `
-      <div class="page-head">
-        <div>
-          <h1 class="page-title">排班表</h1>
-          <p class="page-desc">待开展场次优先展示，点击“编辑”可调整场次、换人或锁定安排。</p>
-        </div>
-        <button class="btn primary" data-action="add-session"><i data-lucide="calendar-plus"></i>新增场次</button>
-      </div>
-      <div class="toolbar">
-        <input class="input" id="scheduleSearch" style="width:220px" placeholder="搜索日期 / 竞聘人员 / 面试官" value="${esc(scheduleQuery)}">
-        <div class="spacer"></div>
-        <span style="color:var(--muted);font-size:12px">待开展 ${pendingList.length} 场 · 已开展 ${historyList.length} 场</span>
-      </div>
-
-      <div class="notice-banner">
-        <i data-lucide="info"></i>
-        <div style="flex:1;min-width:0">
-          <p>为满足各区域的竞聘需求，总部将于每周二、周四下午14:00组织外聘区域总监竞聘，各区域需要有竞聘安排的，请于每周一、周三12:00前报备至人力发展中心，逾期报备的，将视情况顺延场次安排。</p>
-          <p style="margin:6px 0 0;font-weight:600">竞聘前，一定要检查面试工单【终试条件】是否已满足，未满足的先对接区域处理到位，再发起竞聘。</p>
-          <p style="margin:6px 0 0">群通知提醒：复制通知后，请于每周一、周三 15:00 前发到【集团职能中心直属群】。</p>
-          <button class="btn small primary" data-action="enable-notify" style="margin-top:8px"><i data-lucide="bell"></i>开启到点提醒</button>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-head">
-          <h2>待开展</h2>
-          <span class="sub">${nextSession ? "下一场 " + fmtDateCn(nextSession.date) : "暂无待开展场次"}</span>
-          ${needAuto ? `<button class="btn small blue" data-action="fill-upcoming"><i data-lucide="wand-2"></i>一键排好待开展</button>` : ""}
-        </div>
-        <div class="table-wrap">
-          <table class="grid-table">
-            <thead>
-              <tr><th>日期</th><th>时间</th><th>竞聘人员</th><th>面试官</th><th>主持人</th><th>备注</th><th>状态</th><th></th></tr>
-            </thead>
-            <tbody>
-              ${pendingList.map((s, i) => rowHtml(s, i === 0)).join("") || '<tr><td colspan="8"><div class="empty"><div class="big">没有待开展场次</div><p>可以点右上角“新增场次”。</p></div></td></tr>'}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="panel" style="margin-top:14px">
-        <div class="panel-head">
-          <h2>已开展 / 历史</h2>
-          <span class="sub">最新在前</span>
-        </div>
-        <div class="table-wrap">
-          <table class="grid-table">
-            <thead>
-              <tr><th>日期</th><th>时间</th><th>竞聘人员</th><th>面试官</th><th>主持人</th><th>备注</th><th>状态</th><th></th></tr>
-            </thead>
-            <tbody>
-              ${historyList.map((s) => rowHtml(s, false)).join("") || '<tr><td colspan="8"><div class="empty"><div class="big">暂无历史场次</div></div></td></tr>'}
-            </tbody>
-          </table>
-        </div>
-      </div>
     `;
   }
 
@@ -3792,7 +3685,7 @@ window.SEED_DATA = {
       <div class="page-head">
         <div>
           <h1 class="page-title">规则与排班</h1>
-          <p class="page-desc">先确认规则，再点按钮排班；排完还可以在“排班表”里手动换人并锁定。</p>
+          <p class="page-desc">先确认规则，再点按钮排班；排完还可以在竞聘记录中手动换人并锁定。</p>
         </div>
       </div>
       <div class="grid-2">
@@ -3886,25 +3779,25 @@ window.SEED_DATA = {
         num: 1,
         title: "确认面试形式",
         desc: "收到竞聘工单后，先联系区域助理确认本场是线上腾讯会议还是线下，再开始排班。",
-        actions: `<button class="btn small blue" data-action="nav-view" data-view="schedule"><i data-lucide="calendar-days"></i>去排班表</button>`,
+        actions: `<button class="btn small blue" data-action="nav-view" data-view="records"><i data-lucide="calendar-days"></i>查看竞聘记录</button>`,
       },
       {
         num: 2,
         title: "完成面试排班",
-        desc: "在排班表新增场次，使用“按规则排班”自动安排 2 位中心负责人 + 3 位助理，并核对主持人是否为本轮轮到的人。",
-        actions: `<button class="btn small primary" data-action="add-session"><i data-lucide="calendar-plus"></i>新增场次</button> <button class="btn small blue" data-action="nav-view" data-view="schedule"><i data-lucide="wand-2"></i>去排班表</button>`,
+        desc: "新增场次，使用“按规则排班”自动安排 2 位中心负责人 + 3 位助理，并核对主持人是否为本轮轮到的人。",
+        actions: `<button class="btn small primary" data-action="add-session"><i data-lucide="calendar-plus"></i>新增场次</button> <button class="btn small blue" data-action="nav-view" data-view="records"><i data-lucide="wand-2"></i>查看竞聘记录</button>`,
       },
       {
         num: 3,
         title: "完善候选人工单",
         desc: "竞聘前检查面试工单【终试条件】和内容完成度，确保 100%；未满足的先对接区域处理到位，再发起竞聘。",
-        actions: `<button class="btn small blue" data-action="nav-view" data-view="schedule"><i data-lucide="check-circle-2"></i>查看场次备注</button>`,
+        actions: `<button class="btn small blue" data-action="nav-view" data-view="records"><i data-lucide="check-circle-2"></i>查看场次备注</button>`,
       },
       {
         num: 4,
         title: "发送竞聘通知",
         desc: "竞聘前一天把通知发给各面试官，并在周一/周三 15:00 前发到【集团职能中心直属群】；使用“复制通知”可直接生成文案。",
-        actions: `<button class="btn small primary" data-action="nav-view" data-view="schedule"><i data-lucide="copy"></i>去复制通知</button>`,
+        actions: `<button class="btn small primary" data-action="nav-view" data-view="records"><i data-lucide="copy"></i>查看场次并复制通知</button>`,
       },
     ];
     root.innerHTML = `
@@ -3913,7 +3806,7 @@ window.SEED_DATA = {
           <h1 class="page-title">竞聘流程</h1>
           <p class="page-desc">从收到工单到发送通知的完整步骤，按顺序操作即可。</p>
         </div>
-        <button class="btn primary" data-action="nav-view" data-view="schedule"><i data-lucide="calendar-days"></i>去排班表</button>
+        <button class="btn primary" data-action="nav-view" data-view="records"><i data-lucide="calendar-days"></i>查看竞聘记录</button>
       </div>
       <div class="process-steps">
         ${steps.map((step) => `
@@ -4852,6 +4745,7 @@ window.SEED_DATA = {
       return;
     }
     if (action === "nav-view" || action === "go-auto") {
+      if (actionEl.dataset.filter) recordsFilter = actionEl.dataset.filter;
       setView(action === "go-auto" ? "auto" : actionEl.dataset.view);
       return;
     }
@@ -4989,8 +4883,6 @@ window.SEED_DATA = {
       const fromModal = Boolean(actionEl.closest(".modal"));
       if (fromModal) {
         openSessionModal(id);
-      } else if (currentView === "schedule") {
-        saveAndRender();
       } else {
         closeModal();
         saveAndRender();
@@ -5092,16 +4984,6 @@ window.SEED_DATA = {
 
   document.addEventListener("change", (e) => {
     const el = e.target;
-    if (el.id === "scheduleSearch") {
-      scheduleQuery = el.value;
-      renderSchedule();
-      return;
-    }
-    if (el.id === "scheduleStatusFilter") {
-      scheduleStatus = el.value;
-      renderSchedule();
-      return;
-    }
     if (el.id === "calDate") {
       calendarWeekStart = startOfWeekIso(el.value);
       renderCalendar();
@@ -5120,12 +5002,6 @@ window.SEED_DATA = {
 
   document.addEventListener("input", (e) => {
     const el = e.target;
-    if (el.id === "scheduleSearch") {
-      scheduleQuery = el.value;
-      clearTimeout(window.__searchTimer);
-      window.__searchTimer = setTimeout(() => renderSchedule(), 180);
-      return;
-    }
     if (el.id === "genCount") {
       const btn = document.getElementById("genBtn");
       if (btn) {

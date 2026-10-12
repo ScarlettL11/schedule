@@ -3067,7 +3067,6 @@ window.SEED_DATA = {
         const item = new ClipboardItem({
           "text/plain": plainTextBlob,
           "text/html": htmlPromise,
-          "image/png": blobPromise,
         }, { presentationStyle: "inline" });
         navigator.clipboard.write([item]).then(() => {
           showToast("通知文字和场次图片已复制，可粘贴到群聊", "ok");

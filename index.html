@@ -2955,22 +2955,16 @@ window.SEED_DATA = {
       }
       return lines.length ? lines : ["待定"];
     };
-    measure.font = `500 19px ${font}`;
     const chipRows = [];
-    let currentRow = [];
-    let currentWidth = 0;
-    for (const interviewer of interviewers) {
+    const chipColumnGap = 10;
+    const chipWidth = (interviewerWidth - cellPad * 2 - chipColumnGap) / 2;
+    interviewers.forEach((interviewer, index) => {
       const label = `${interviewer.name}  ${interviewer.dept}`;
-      const chipWidth = Math.min(interviewerWidth - cellPad * 2, Math.ceil(measure.measureText(label).width) + 42);
-      if (currentRow.length && currentWidth + chipWidth + 10 > interviewerWidth - cellPad * 2) {
-        chipRows.push(currentRow);
-        currentRow = [];
-        currentWidth = 0;
-      }
-      currentRow.push({ ...interviewer, label: textLines(label, chipWidth - 38, 19).join(""), width: chipWidth });
-      currentWidth += chipWidth + (currentRow.length > 1 ? 10 : 0);
-    }
-    if (currentRow.length) chipRows.push(currentRow);
+      const item = { ...interviewer, label: textLines(label, chipWidth - 38, 19).join(""), width: chipWidth };
+      const rowIndex = Math.floor(index / 2);
+      if (!chipRows[rowIndex]) chipRows[rowIndex] = [];
+      chipRows[rowIndex].push(item);
+    });
     if (!chipRows.length) chipRows.push([]);
 
     const dateLabel = fmtDateCn(session.date);
@@ -3026,25 +3020,25 @@ window.SEED_DATA = {
     drawLines(candidateLines, colX + cellPad, rowCenter, "#30231d", 22);
     colX += cols[3].width;
     chipRows.forEach((row, rowIndex) => {
-      let x = colX + cellPad;
+      const x = colX + cellPad;
       const y = rowCenter - chipBlockHeight / 2 + rowIndex * (chipHeight + chipGap);
-      for (const item of row) {
+      row.forEach((item, columnIndex) => {
+        const chipX = x + columnIndex * (chipWidth + chipColumnGap);
         ctx.font = `500 19px ${font}`;
         ctx.fillStyle = `${item.color}14`;
         ctx.strokeStyle = `${item.color}44`;
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.roundRect(x, y, item.width, chipHeight, 21);
+        ctx.roundRect(chipX, y, item.width, chipHeight, 21);
         ctx.fill();
         ctx.stroke();
         ctx.beginPath();
-        ctx.arc(x + 15, y + chipHeight / 2, 6, 0, Math.PI * 2);
+        ctx.arc(chipX + 15, y + chipHeight / 2, 6, 0, Math.PI * 2);
         ctx.fillStyle = item.color;
         ctx.fill();
         ctx.fillStyle = item.color;
-        ctx.fillText(item.label, x + 28, y + chipHeight / 2);
-        x += item.width + 10;
-      }
+        ctx.fillText(item.label, chipX + 28, y + chipHeight / 2);
+      });
     });
     colX += cols[4].width;
     drawLines(textLines(hostDisplayName(session) || "待定", cols[5].width - cellPad * 2, 22, 600), colX + cellPad, rowCenter, "#49372e", 22, 600);

@@ -3777,8 +3777,6 @@ window.SEED_DATA = {
     const rows = [];
     for (let i = 0; i < maxSlot; i += 1) {
       const iv = slots.find((x) => x.slot === i) || { slot: i, deptId: "", personId: "", locked: false };
-      const slotPerson = iv.personId ? findPerson(iv.personId) : null;
-      const roleLabel = slotPerson ? (slotPerson.role || (i < (state.settings.headsPerSession || 2) ? "中心负责人" : "助理")) : (i < (state.settings.headsPerSession || 2) ? "中心负责人" : "助理");
       const deptOptions = `<option value="">选择部门</option>${depts.map((d) => `<option value="${esc(d.id)}" ${iv.deptId === d.id ? "selected" : ""}>${esc(d.name)}</option>`).join("")}`;
       const people = iv.deptId ? (findDept(iv.deptId)?.people || []) : [];
       const personOptions = `<option value="">选择面试官</option>${people.map((p) => `<option value="${esc(p.id)}" ${iv.personId === p.id ? "selected" : ""}>${esc(p.name)}${p.enabled ? "" : "（暂停）"}</option>`).join("")}`;
@@ -3786,7 +3784,6 @@ window.SEED_DATA = {
         <div class="slot-row">
           <div style="display:flex;align-items:center;gap:6px;min-width:0">
             <span class="slot-index">${i + 1}</span>
-            <span class="chip neutral" style="white-space:nowrap">${esc(roleLabel)}</span>
           </div>
           <select class="select slot-dept" data-slot="${i}">${deptOptions}</select>
           <select class="select slot-person" data-slot="${i}">${personOptions}</select>

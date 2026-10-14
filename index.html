@@ -1853,8 +1853,14 @@ window.SEED_DATA = {
   }
 
   function markPassedSessions() {
-    // Rotation status is explicit: elapsed time alone never turns a draft into a completed interview.
-    return false;
+    let changed = false;
+    for (const session of state.sessions || []) {
+      if (session.status !== "待安排" || !sessionIsPassed(session)) continue;
+      session.status = "已开展";
+      changed = true;
+    }
+    if (changed) rebuildRotationCursors();
+    return changed;
   }
 
   function startOfWeekIso(dateValue) {
@@ -2639,9 +2645,9 @@ window.SEED_DATA = {
   }
 
   function saveAndRender() {
+    markPassedSessions();
     rebuildRotationCursors();
     saveStateNow();
-    markPassedSessions();
     syncOpenDepts();
     renderCurrentView();
   }
@@ -3624,7 +3630,7 @@ window.SEED_DATA = {
               <ul>
                 <li>部门按上方名单顺序轮值；财务每轮参加，其余部门每两轮参加一次。</li>
                 <li>每场安排 ${state.settings.interviewersPerSession} 位面试官；部门内优先安排已开展场次较少、最近较少参加的人。</li>
-                <li>只有状态为“已开展”的场次计入部门、面试官和主持人轮值；待开展或已取消的场次不推进轮值，过期场次也不会自动改为已开展。</li>
+                <li>场次结束时间过后会自动标记为“已开展”并计入部门、面试官和主持人轮值；待开展或已取消的场次不推进轮值。</li>
               </ul>
             </div>
           </div>
@@ -5046,7 +5052,7 @@ window.SEED_DATA = {
       if (isEditing()) return;
       try {
         state = normalizeState(JSON.parse(event.newValue));
-        markPassedSessions();
+        if (markPassedSessions()) saveStateNow();
         syncOpenDepts();
         renderCurrentView();
         showToast("已同步其他标签页的更新", "ok");
@@ -5068,8 +5074,8 @@ window.SEED_DATA = {
       if (data && data.departments && data.sessions) {
         serverMode = true;
         state = normalizeState(data);
-        markPassedSessions();
-        saveState();
+        if (markPassedSessions()) saveStateNow();
+        else saveState();
         renderCurrentView();
         const el = document.getElementById("serverStatus");
         if (el) {
@@ -5097,8 +5103,9 @@ window.SEED_DATA = {
       state = normalizeState(row.data);
       serverMode = true;
       localEditsWhileDisconnected = false;
-      markPassedSessions();
+      const elapsedSessionsUpdated = markPassedSessions();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      if (elapsedSessionsUpdated) saveStateNow();
       renderCurrentView();
       setSupabaseStatus("云端同步正常 · 自动更新", "var(--green)");
     } catch (err) {
@@ -5134,9 +5141,10 @@ window.SEED_DATA = {
       serverMode = true;
       if (JSON.stringify(remote) !== JSON.stringify(state)) {
         state = normalizeState(remote);
-        markPassedSessions();
+        const elapsedSessionsUpdated = markPassedSessions();
         syncOpenDepts();
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        if (elapsedSessionsUpdated) saveStateNow();
         renderCurrentView();
       }
       supabaseLastError = "";
@@ -5164,8 +5172,9 @@ window.SEED_DATA = {
         const remote = JSON.stringify(data);
         if (remote !== local) {
           state = normalizeState(data);
-          markPassedSessions();
+          const elapsedSessionsUpdated = markPassedSessions();
           syncOpenDepts();
+          if (elapsedSessionsUpdated) saveStateNow();
           renderCurrentView();
         }
       }
@@ -5186,8 +5195,17 @@ window.SEED_DATA = {
     }
   });
   setInterval(() => {
-    if (markPassedSessions() && !isEditing()) renderCurrentView();
+    if (!isEditing() && markPassedSessions()) {
+      saveStateNow();
+      renderCurrentView();
+    }
   }, 60000);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && !isEditing() && markPassedSessions()) {
+      saveStateNow();
+      renderCurrentView();
+    }
+  });
 })();
 
 </script>

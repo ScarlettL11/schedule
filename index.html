@@ -2659,10 +2659,11 @@ window.SEED_DATA = {
   }
 
   async function saveToSupabase() {
-    if (!SUPABASE_URL || !SUPABASE_KEY) return;
+    if (!SUPABASE_URL || !SUPABASE_KEY) return false;
     if (supabaseSaveInFlight) {
       supabaseSaveQueued = true;
-      return;
+      while (supabaseSaveInFlight) await new Promise((resolve) => setTimeout(resolve, 20));
+      return serverMode;
     }
     supabaseSaveInFlight = true;
     try {
@@ -2695,6 +2696,7 @@ window.SEED_DATA = {
     } finally {
       supabaseSaveInFlight = false;
     }
+    return serverMode;
   }
 
   function saveStateNow() {
@@ -4156,7 +4158,8 @@ window.SEED_DATA = {
     draftSession.note = $("#sesNote")?.value || "";
   }
 
-  function saveSessionFromModal() {
+  async function saveSessionFromModal() {
+    const cloudWasConnected = serverMode;
     const isNew = selectedSessionId === "new";
     const session = isNew ? draftSession : state.sessions.find((s) => s.id === selectedSessionId);
     if (!session) return;
@@ -4192,7 +4195,15 @@ window.SEED_DATA = {
     if (isNew) state.sessions.push(session);
     closeModal();
     saveAndRender();
-    showToast("场次已保存", "ok");
+    if (cloudWasConnected) {
+      const synced = await saveToSupabase();
+      if (synced) showToast("场次已保存并同步到云端", "ok");
+      else showToast("场次仅保存在本机，云端未同步，其他人暂时看不到", "error");
+    } else if (SUPABASE_URL && SUPABASE_KEY) {
+      showToast("场次仅保存在本机，云端未连接，其他人暂时看不到", "error");
+    } else {
+      showToast("场次已保存在本机", "ok");
+    }
   }
 
   // ---------- import / export ----------

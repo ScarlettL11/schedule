@@ -563,6 +563,15 @@ table.grid-table {
 .field input, .field select, .field textarea { width: 100%; }
 .field.check { flex-direction: row; align-items: center; gap: 8px; }
 .field.check input { width: auto; }
+.session-mode-field { grid-column: 1 / -1; max-width: 760px; }
+.meeting-link-row { display: flex; align-items: center; gap: 10px; }
+.meeting-link-row .input { flex: 1; min-width: 0; min-height: 40px; }
+.meeting-book-btn { min-height: 40px; padding: 0 14px; text-decoration: none; }
+.meeting-help { margin: 0; line-height: 1.4; }
+@media (max-width: 520px) {
+  .meeting-link-row { align-items: stretch; flex-direction: column; }
+  .meeting-book-btn { align-self: flex-start; }
+}
 
 .switch {
   position: relative;
@@ -4001,15 +4010,15 @@ window.SEED_DATA = {
                 <label>开展模式</label>
                 <select class="select" id="sesMode">${modeOptions}</select>
               </div>
-              <div class="field" id="sesMeetingField" style="display:${modeValue === "线下" ? "none" : "block"}">
+              <div class="field session-mode-field" id="sesMeetingField" style="display:${modeValue === "线下" ? "none" : "block"}">
                 <label>腾讯会议链接</label>
-                <div style="display:flex;gap:8px;align-items:center">
-                  <input class="input" id="sesMeetingUrl" type="url" placeholder="预约后粘贴会议邀请链接" value="${esc(session.meetingUrl || "")}" style="flex:1;min-width:0">
-                  <a class="btn small" href="https://meeting.tencent.com/" target="_blank" rel="noopener noreferrer">去腾讯会议预约</a>
+                <div class="meeting-link-row">
+                  <input class="input" id="sesMeetingUrl" type="url" placeholder="粘贴腾讯会议邀请链接" value="${esc(session.meetingUrl || "")}">
+                  <a class="btn primary small meeting-book-btn" href="https://meeting.tencent.com/" target="_blank" rel="noopener noreferrer">预约会议 ↗</a>
                 </div>
-                <span class="help">在新页面预约会议，复制入会链接回来粘贴，然后保存场次。</span>
+                <span class="help meeting-help">预约后粘贴会议链接，保存场次即可。</span>
               </div>
-              <div class="field" id="sesVenueField" style="display:${modeValue === "线下" ? "block" : "none"}">
+              <div class="field session-mode-field" id="sesVenueField" style="display:${modeValue === "线下" ? "block" : "none"}">
                 <label>面试地点</label>
                 <input class="input" id="sesLocation" type="text" value="${esc(offlineVenue)}" placeholder="请输入面试地点">
               </div>

@@ -4722,7 +4722,10 @@ window.SEED_DATA = {
         showToast(`已恢复${cleanName}的原人员档案，历史排班关联已保留`, "ok");
         return;
       }
-      if (archivedMatches.length > 1 && !confirm(`找到多条名为“${cleanName}”的历史档案。继续新增会创建新的人员编号，历史排班不会自动合并。仍要新增吗？`)) return;
+      if (archivedMatches.length > 1) {
+        showToast(`“${cleanName}”存在多条历史档案，请先恢复或调整原人员记录，避免历史排班断开`, "warn");
+        return;
+      }
 
       dept.people.push({
         id: uid("p"),

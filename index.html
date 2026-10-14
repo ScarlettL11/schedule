@@ -430,19 +430,6 @@ table.grid-table {
 .chip.warn { background: var(--amber-soft); color: var(--amber); }
 .chip.ok { background: var(--green-soft); color: var(--green); }
 .chip.neutral { background: #eef1f4; color: var(--muted); }
-.chip-risk {
-  display: inline-flex;
-  align-items: center;
-  margin-left: 3px;
-  padding: 0 5px;
-  border-radius: 999px;
-  background: var(--amber-soft);
-  color: var(--amber);
-  font-size: 10px;
-  line-height: 1.5;
-  vertical-align: middle;
-}
-
 .status-pill {
   display: inline-flex;
   align-items: center;
@@ -2060,6 +2047,61 @@ window.SEED_DATA = {
     return run;
   }
 
+  function sessionComesBefore(first, second) {
+    if (!first || !second || first.id === second.id) return false;
+    const firstDate = parseDate(first.date);
+    const secondDate = parseDate(second.date);
+    const firstDay = firstDate ? firstDate.getTime() : 0;
+    const secondDay = secondDate ? secondDate.getTime() : 0;
+    if (firstDay !== secondDay) return firstDay < secondDay;
+    const timeOrder = (first.time || "").localeCompare(second.time || "");
+    if (timeOrder !== 0) return timeOrder < 0;
+    const firstIndex = state.sessions.findIndex((item) => item.id === first.id);
+    const secondIndex = state.sessions.findIndex((item) => item.id === second.id);
+    return firstIndex >= 0 && secondIndex >= 0 && firstIndex < secondIndex;
+  }
+
+  function pendingSessionsBefore(session) {
+    return sortSessions(state.sessions.filter((item) =>
+      item.status === "待安排" && item.id !== session?.id && sessionComesBefore(item, session)
+    ));
+  }
+
+  function rotationCursorsBeforeSession(session) {
+    const cursors = deepClone(state.cursors);
+    cursors.deptPassCounts = cursors.deptPassCounts || {};
+    const departments = orderedDepartments();
+    const heads = departments.filter((dept) => (dept.people || []).some((person) => person.enabled && person.role === "中心负责人"));
+    const assistants = departments.filter((dept) => (dept.people || []).some((person) => person.enabled && person.role === "助理"));
+    const peopleById = new Map([...departments.flatMap((dept) => dept.people || []), ...(state.archivedPeople || [])].map((person) => [person.id, person]));
+    for (const pending of pendingSessionsBefore(session)) {
+      for (const iv of (pending.interviewers || []).slice().sort((a, b) => a.slot - b.slot)) {
+        const dept = departments.find((item) => item.id === iv.deptId);
+        if (!dept) continue;
+        cursors.deptPassCounts[dept.id] = (cursors.deptPassCounts[dept.id] || 0) + 1;
+        const person = peopleById.get(iv.personId);
+        if (person?.role === "中心负责人" && heads.length) {
+          const index = heads.findIndex((item) => item.id === dept.id);
+          if (index >= 0) cursors.headIndex = (index + 1) % heads.length;
+        } else if (person?.role === "助理" && assistants.length) {
+          const index = assistants.findIndex((item) => item.id === dept.id);
+          if (index >= 0) cursors.assistantIndex = (index + 1) % assistants.length;
+        }
+      }
+    }
+    return cursors;
+  }
+
+  function pendingPersonAssignmentCountsBefore(session) {
+    const counts = new Map();
+    for (const pending of pendingSessionsBefore(session)) {
+      for (const iv of pending.interviewers || []) {
+        if (iv.personId) counts.set(iv.personId, (counts.get(iv.personId) || 0) + 1);
+      }
+    }
+    return counts;
+  }
+
   function pickRole(poolName, session, excludedIds) {
     const pool = poolName === "hosts" ? state.hosts : state.organizers;
     if (!pool.length) return null;
@@ -2091,14 +2133,11 @@ window.SEED_DATA = {
   function nextHostFromCompleted(session, excludedIds = new Set(), excludeSessionId = null) {
     const pool = state.hosts;
     if (!pool.length) return null;
-    const targetDate = session?.date || todayIso();
-    const targetTime = session?.time || "23:59";
-    const latest = sortSessionsDesc(state.sessions.filter((s) => {
+    const latest = state.sessions.filter((s) => {
       if (s.status === "已取消" || s.id === excludeSessionId || !(s.hostId || s.hostName)) return false;
-      const beforeTarget = s.date < targetDate || (s.date === targetDate && (s.time || "") < targetTime);
-      if (!beforeTarget) return false;
-      return s.status === "已开展" || s.status === "待安排";
-    }))[0];
+      return (s.status === "已开展" || s.status === "待安排") && sessionComesBefore(s, session);
+    }).reduce((latestSession, candidate) =>
+      !latestSession || sessionComesBefore(latestSession, candidate) ? candidate : latestSession, null);
     const latestName = latest ? (hostDisplayName(latest) || latest.hostName || "") : "";
     const latestIndex = pool.findIndex((h) => h.id === latest?.hostId || h.name === latestName);
     const start = latestIndex >= 0 ? (latestIndex + 1) % pool.length : (state.cursors.hostIndex || 0) % pool.length;
@@ -2120,6 +2159,7 @@ window.SEED_DATA = {
 
   function pickPersonForDeptRole(dept, session, excludedIds, wantedRole) {
     const stats = computeStats(true);
+    const pendingAssignments = pendingPersonAssignmentCountsBefore(session);
     const maxDefault = state.settings.maxConsecutivePerPerson || 1;
     const candidates = dept.people.filter((p) => {
       if (!personAvailable(p, session.date)) return false;
@@ -2137,6 +2177,10 @@ window.SEED_DATA = {
       const sb = stats.total[b.id] || 0;
       const ca = stats.consec[a.id] || 0;
       const cb = stats.consec[b.id] || 0;
+      if (ca !== cb) return ca - cb;
+      const pa = pendingAssignments.get(a.id) || 0;
+      const pb = pendingAssignments.get(b.id) || 0;
+      if (pa !== pb) return pa - pb;
       const ma = a.maxConsecutive || maxDefault;
       const mb = b.maxConsecutive || maxDefault;
       const overA = ca >= ma ? 1 : 0;
@@ -2255,9 +2299,10 @@ window.SEED_DATA = {
   }
 
   function fillSession(sessionOrId) {
-    const cursorsBeforeFill = deepClone(state.cursors);
     const session = typeof sessionOrId === "string" ? state.sessions.find((s) => s.id === sessionOrId) : sessionOrId;
     if (!session || session.status === "已取消") return { filled: 0, warnings: [] };
+    const cursorsBeforeFill = deepClone(state.cursors);
+    state.cursors = rotationCursorsBeforeSession(session);
     const lockedAll = (session.interviewers || []).filter((iv) => iv.locked);
     const slots = Math.max(1, state.settings.interviewersPerSession || 5, lockedAll.length);
     const existing = lockedAll.slice(0, slots);
@@ -2753,9 +2798,7 @@ window.SEED_DATA = {
       const limit = person ? (person.maxConsecutive || 1) : 1;
       const risk = consec >= limit;
       const title = `${name} · ${dept ? dept.name : ""} · 累计${stats.total[iv.personId] || 0}场 · 连续${consec}场${risk ? "（建议换人）" : ""}`;
-      const chipColor = risk ? "#b45309" : color;
-      const chipBg = risk ? "#fdf0dd" : `${color}14`;
-      return `<span class="chip" style="border-color:${chipColor}22;background:${chipBg};color:${chipColor}" title="${esc(title)}"><span class="dot"></span>${esc(name)}<span style="opacity:.72">${esc(short)}</span>${risk ? '<span class="chip-risk">连排</span>' : ""}</span>`;
+      return `<span class="chip" style="border-color:${color}22;background:${color}14;color:${color}" title="${esc(title)}"><span class="dot"></span>${esc(name)}<span style="opacity:.72">${esc(short)}</span></span>`;
     }).join("")}</span>`;
   }
 

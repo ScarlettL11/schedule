@@ -4694,10 +4694,39 @@ window.SEED_DATA = {
     const dept = findDept(deptId);
     if (!dept) return;
     promptModal("添加面试官", "请输入姓名", "", (name) => {
-      if (!name.trim()) return;
+      const cleanName = name.trim();
+      if (!cleanName) return;
+
+      const activeMatch = state.departments
+        .flatMap((item) => item.people.map((person) => ({ person, dept: item })))
+        .find(({ person }) => person.name.trim() === cleanName);
+      if (activeMatch) {
+        if (activeMatch.dept.id === dept.id) {
+          showToast("该部门已存在这位面试官", "warn");
+          return;
+        }
+        if (!confirm(`“${cleanName}”目前在${activeMatch.dept.name}。要保留原有历史排班并直接调整到${dept.name}吗？`)) return;
+        movePersonToDepartment(activeMatch.person.id, dept.id);
+        return;
+      }
+
+      const archivedMatches = (state.archivedPeople || []).filter((person) => person.name.trim() === cleanName);
+      if (archivedMatches.length === 1) {
+        if (!confirm(`找到“${cleanName}”的历史人员档案。恢复原档案可以保留历史排班关联，是否恢复到${dept.name}？`)) return;
+        const person = archivedMatches[0];
+        state.archivedPeople = state.archivedPeople.filter((item) => item.id !== person.id);
+        person.archived = false;
+        person.enabled = true;
+        dept.people.push(person);
+        saveAndRender();
+        showToast(`已恢复${cleanName}的原人员档案，历史排班关联已保留`, "ok");
+        return;
+      }
+      if (archivedMatches.length > 1 && !confirm(`找到多条名为“${cleanName}”的历史档案。继续新增会创建新的人员编号，历史排班不会自动合并。仍要新增吗？`)) return;
+
       dept.people.push({
         id: uid("p"),
-        name: name.trim(),
+        name: cleanName,
         role: "",
         enabled: true,
         note: "",

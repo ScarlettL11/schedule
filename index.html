@@ -2448,6 +2448,7 @@ window.SEED_DATA = {
     s.sessions = (s.sessions || []).map((x) => {
       if (x.hostName) x.hostName = hostRename[x.hostName] || x.hostName;
       x.interviewers = x.interviewers || [];
+      x.meetingUrl = x.meetingUrl || "";
       x.status = x.status || "待安排";
       x.notified = x.notified === true;
       x.formConfirmed = x.formConfirmed === true;
@@ -2737,7 +2738,8 @@ window.SEED_DATA = {
     const sessionDate = parseDate(session.date);
     const tomorrowTag = sessionDate && dateKey(sessionDate) === addDays(todayIso(), 1) ? "（明日）" : "";
     const mode = (session.mode || "").trim();
-    const location = mode === "线下" ? "总部会议室1601" : "线上会议";
+    const meetingUrl = (session.meetingUrl || "").trim();
+    const location = mode === "线下" ? "总部会议室1601" : (meetingUrl ? `腾讯会议：${meetingUrl}` : "线上会议链接（请补充）");
     const rawCandidate = (session.candidates || "").split("\n").map((s) => s.trim()).find(Boolean) || "";
     const candidateMatch = rawCandidate.match(/(.+?)外聘区域总监【(.+?)】/);
     let name = "";
@@ -2768,7 +2770,7 @@ window.SEED_DATA = {
         "您好，邀请您参加区域总监岗位总部竞聘：",
         "",
         `【时间】${dateLabel} ${timeDisplay}`,
-        `【地点】${mode === "线下" ? "乐有家控股集团总部1601会议室（安吉尔大厦16楼）" : "线上会议链接"}`,
+        `【地点】${mode === "线下" ? "乐有家控股集团总部1601会议室（安吉尔大厦16楼）" : (meetingUrl || "线上会议链接（请补充）")}`,
         "【温馨提示】：",
         "1、请提前10分钟至会议室外等候/至16楼前台签到，迟到15分钟以上视为放弃竞聘",
         "2、请您着工装/商务正装，更好地展现您的专业形象",
@@ -3844,6 +3846,7 @@ window.SEED_DATA = {
       date: todayIso(),
       time: state.settings.defaultTime || "14:00-14:40",
       mode: state.settings.defaultMode || "腾讯会议",
+      meetingUrl: "",
       candidates: "",
       status: "待安排",
       hostId: null,
@@ -3943,6 +3946,14 @@ window.SEED_DATA = {
                 <select class="select" id="sesMode">${modeOptions}</select>
               </div>
               <div class="field">
+                <label>腾讯会议链接</label>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <input class="input" id="sesMeetingUrl" type="url" placeholder="预约后粘贴会议邀请链接" value="${esc(session.meetingUrl || "")}" style="flex:1;min-width:0">
+                  <a class="btn small" href="https://meeting.tencent.com/" target="_blank" rel="noopener noreferrer">去腾讯会议预约</a>
+                </div>
+                <span class="help">在新页面预约会议，复制入会链接回来粘贴，然后保存场次。</span>
+              </div>
+              <div class="field">
                 <label>状态</label>
                 <select class="select" id="sesStatus">
                   <option value="待安排" ${session.status === "待安排" ? "selected" : ""}>待开展</option>
@@ -4021,6 +4032,7 @@ window.SEED_DATA = {
     const end = $("#sesTimeEnd")?.value || "14:40";
     draftSession.time = `${start}-${end}`;
     draftSession.mode = $("#sesMode")?.value || draftSession.mode;
+    draftSession.meetingUrl = $("#sesMeetingUrl")?.value.trim() || "";
     draftSession.candidates = $("#sesCandidates")?.value || "";
     draftSession.status = $("#sesStatus")?.value || draftSession.status;
     draftSession.hostId = $("#sesHost")?.value || null;
@@ -4040,6 +4052,7 @@ window.SEED_DATA = {
     const timeEnd = $("#sesTimeEnd")?.value || "14:40";
     session.time = `${timeStart}-${timeEnd}`;
     session.mode = $("#sesMode").value.trim() || "腾讯会议";
+    session.meetingUrl = $("#sesMeetingUrl")?.value.trim() || "";
     session.status = $("#sesStatus").value;
     session.candidates = $("#sesCandidates").value;
     session.notified = $("#sesNotified")?.checked === true;

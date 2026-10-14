@@ -2472,6 +2472,7 @@ window.SEED_DATA = {
       if (x.hostName) x.hostName = hostRename[x.hostName] || x.hostName;
       x.interviewers = x.interviewers || [];
       x.meetingUrl = x.meetingUrl || "";
+      x.location = typeof x.location === "string" ? x.location : (String(x.mode || "").includes("线下") ? "深圳市福田区安吉尔大厦15楼乐有家总部" : "");
       x.hostManual = x.hostManual === true;
       x.status = x.status || "待安排";
       x.notified = x.notified === true;
@@ -2791,7 +2792,7 @@ window.SEED_DATA = {
     const tomorrowTag = sessionDate && dateKey(sessionDate) === addDays(todayIso(), 1) ? "（明日）" : "";
     const mode = (session.mode || "").trim();
     const meetingUrl = (session.meetingUrl || "").trim();
-    const location = mode === "线下" ? "总部会议室1601" : (meetingUrl ? `腾讯会议：${meetingUrl}` : "线上会议链接（请补充）");
+    const location = mode === "线下" ? (session.location || "深圳市福田区安吉尔大厦15楼乐有家总部") : (meetingUrl ? `腾讯会议：${meetingUrl}` : "线上会议链接（请补充）");
     const rawCandidate = (session.candidates || "").split("\n").map((s) => s.trim()).find(Boolean) || "";
     const candidateMatch = rawCandidate.match(/(.+?)外聘区域总监【(.+?)】/);
     let name = "";
@@ -2822,7 +2823,7 @@ window.SEED_DATA = {
         "您好，邀请您参加区域总监岗位总部竞聘：",
         "",
         `【时间】${dateLabel} ${timeDisplay}`,
-        `【地点】${mode === "线下" ? "乐有家控股集团总部1601会议室（安吉尔大厦16楼）" : (meetingUrl || "线上会议链接（请补充）")}`,
+        `【地点】${mode === "线下" ? (session.location || "深圳市福田区安吉尔大厦15楼乐有家总部") : (meetingUrl || "线上会议链接（请补充）")}`,
         "【温馨提示】：",
         "1、请提前10分钟至会议室外等候/至16楼前台签到，迟到15分钟以上视为放弃竞聘",
         "2、请您着工装/商务正装，更好地展现您的专业形象",
@@ -3899,6 +3900,7 @@ window.SEED_DATA = {
       time: state.settings.defaultTime || "14:00-14:40",
       mode: state.settings.defaultMode || "腾讯会议",
       meetingUrl: "",
+      location: (state.settings.defaultMode || "腾讯会议") === "线下" ? "深圳市福田区安吉尔大厦15楼乐有家总部" : "",
       hostManual: false,
       candidates: "",
       status: "待安排",
@@ -3941,6 +3943,7 @@ window.SEED_DATA = {
     }
     const currentMode = (session.mode || "").trim();
     const modeValue = currentMode.includes("腾讯会议") ? "腾讯会议" : (currentMode.includes("线下") || currentMode.includes("会议室")) ? "线下" : (currentMode || "腾讯会议");
+    const offlineVenue = session.location || (modeValue === "线下" ? "深圳市福田区安吉尔大厦15楼乐有家总部" : "");
     let modeOptions = `<option value="腾讯会议" ${modeValue === "腾讯会议" ? "selected" : ""}>腾讯会议</option><option value="线下" ${modeValue === "线下" ? "selected" : ""}>线下</option>`;
     if (modeValue !== "腾讯会议" && modeValue !== "线下") {
       modeOptions += `<option value="${esc(modeValue)}" selected>${esc(modeValue)}</option>`;
@@ -3998,13 +4001,17 @@ window.SEED_DATA = {
                 <label>开展模式</label>
                 <select class="select" id="sesMode">${modeOptions}</select>
               </div>
-              <div class="field">
+              <div class="field" id="sesMeetingField" style="display:${modeValue === "线下" ? "none" : "block"}">
                 <label>腾讯会议链接</label>
                 <div style="display:flex;gap:8px;align-items:center">
                   <input class="input" id="sesMeetingUrl" type="url" placeholder="预约后粘贴会议邀请链接" value="${esc(session.meetingUrl || "")}" style="flex:1;min-width:0">
                   <a class="btn small" href="https://meeting.tencent.com/" target="_blank" rel="noopener noreferrer">去腾讯会议预约</a>
                 </div>
                 <span class="help">在新页面预约会议，复制入会链接回来粘贴，然后保存场次。</span>
+              </div>
+              <div class="field" id="sesVenueField" style="display:${modeValue === "线下" ? "block" : "none"}">
+                <label>面试地点</label>
+                <input class="input" id="sesLocation" type="text" value="${esc(offlineVenue)}" placeholder="请输入面试地点">
               </div>
               <div class="field">
                 <label>状态</label>
@@ -4086,6 +4093,7 @@ window.SEED_DATA = {
     draftSession.time = `${start}-${end}`;
     draftSession.mode = $("#sesMode")?.value || draftSession.mode;
     draftSession.meetingUrl = $("#sesMeetingUrl")?.value.trim() || "";
+    draftSession.location = $("#sesLocation")?.value.trim() || "";
     draftSession.candidates = $("#sesCandidates")?.value || "";
     draftSession.status = $("#sesStatus")?.value || draftSession.status;
     draftSession.hostId = $("#sesHost")?.value || null;
@@ -4106,6 +4114,7 @@ window.SEED_DATA = {
     session.time = `${timeStart}-${timeEnd}`;
     session.mode = $("#sesMode").value.trim() || "腾讯会议";
     session.meetingUrl = $("#sesMeetingUrl")?.value.trim() || "";
+    session.location = $("#sesLocation")?.value.trim() || "";
     session.status = $("#sesStatus").value;
     session.candidates = $("#sesCandidates").value;
     session.notified = $("#sesNotified")?.checked === true;
@@ -5063,6 +5072,17 @@ window.SEED_DATA = {
     if (el.id === "calDate") {
       calendarWeekStart = startOfWeekIso(el.value);
       renderCalendar();
+      return;
+    }
+    if (el.id === "sesMode") {
+      const isOffline = el.value === "线下";
+      const venueField = document.getElementById("sesVenueField");
+      const meetingField = document.getElementById("sesMeetingField");
+      const venueInput = document.getElementById("sesLocation");
+      if (venueField) venueField.style.display = isOffline ? "block" : "none";
+      if (meetingField) meetingField.style.display = isOffline ? "none" : "block";
+      if (isOffline && venueInput && !venueInput.value.trim()) venueInput.value = "深圳市福田区安吉尔大厦15楼乐有家总部";
+      if (selectedSessionId === "new") syncDraftFromModal();
       return;
     }
     if (el.classList.contains("slot-dept")) {

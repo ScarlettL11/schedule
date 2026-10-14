@@ -2699,6 +2699,20 @@ window.SEED_DATA = {
     return root;
   }
 
+  function reopenSessionModalPreservingScroll(sessionId, previousBackdrop) {
+    const scrollTop = previousBackdrop?.scrollTop || 0;
+    const pageScrollY = window.scrollY;
+    openSessionModal(sessionId);
+    const backdrop = $("#modalRoot .modal-backdrop");
+    if (backdrop) backdrop.scrollTop = scrollTop;
+    window.scrollTo(0, pageScrollY);
+    requestAnimationFrame(() => {
+      const refreshedBackdrop = $("#modalRoot .modal-backdrop");
+      if (refreshedBackdrop) refreshedBackdrop.scrollTop = scrollTop;
+      window.scrollTo(0, pageScrollY);
+    });
+  }
+
   function closeModal() {
     $("#modalRoot").innerHTML = "";
     draftSession = null;
@@ -4928,21 +4942,23 @@ window.SEED_DATA = {
     if (action === "fill-session") {
       if (id === "new") {
         if (!draftSession) return;
+        const previousBackdrop = actionEl.closest(".modal-backdrop");
         syncDraftFromModal();
         state.sessions.push(draftSession);
         const result = fillSession(draftSession);
         state.sessions = state.sessions.filter((s) => s.id !== draftSession.id);
-        openSessionModal("new");
+        reopenSessionModalPreservingScroll("new", previousBackdrop);
         showToast(`已排 ${result.filled} 人`, result.warnings.length ? "warn" : "ok");
         return;
       }
       const session = state.sessions.find((s) => s.id === id);
       if (!session) return;
       if (!sessionUnlocked(session)) { showToast("场次已锁定，请先解锁", "warn"); return; }
+      const previousBackdrop = actionEl.closest(".modal-backdrop");
       const result = fillSession(session);
       const fromModal = Boolean(actionEl.closest(".modal"));
       if (fromModal) {
-        openSessionModal(id);
+        reopenSessionModalPreservingScroll(id, previousBackdrop);
       } else {
         closeModal();
         saveAndRender();

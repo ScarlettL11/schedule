@@ -2868,8 +2868,7 @@ window.SEED_DATA = {
         "3）请您在自己提问时开启视频摄像头，他人提问时可无需开启。",
         "4）考核过程中请您提前安排好工作、保持在线。",
         "面试官未着工装/商务正装出席、迟到/早退、竞聘开始前30分钟临时请假、面试过程中不认真（如看手机、接打电话、打瞌睡等）的，下调行为绩效档数2档。",
-        "五、竞聘人员信息（相关详细信息见附件，请提前查阅哟）",
-        "附件链接：xxx",
+        "五、竞聘人员信息（详细信息见随通知发送的附件，请提前查阅哟）",
       ].join("\n");
     }
     if (type === "candidate") {
@@ -2923,6 +2922,11 @@ window.SEED_DATA = {
                   </div>
                 </button>
               `).join("")}
+            </div>
+            <div style="margin-top:14px;padding:12px 14px;border:1px solid var(--border);border-radius:8px;background:var(--panel-soft)">
+              <div style="font-weight:600">面试官通知附件</div>
+              <div style="color:var(--muted);font-size:12px;margin:3px 0 9px">填入本场候选人信息后下载，作为附件随面试官通知发送</div>
+              <button class="btn" data-action="open-candidate-doc"><i data-lucide="file-down"></i>打开候选人资料文档</button>
             </div>
             <button class="btn primary" style="width:100%;justify-content:flex-start;height:auto;padding:12px 14px;margin-top:14px" data-action="export-session-image" data-id="${esc(session.id)}">
               <i data-lucide="image"></i>
@@ -4994,6 +4998,11 @@ window.SEED_DATA = {
     if (action === "export-session-image") {
       const session = id === "new" ? draftSession : state.sessions.find((s) => s.id === id);
       if (session) downloadSessionOverviewImage(session);
+      return;
+    }
+    if (action === "open-candidate-doc") {
+      window.open("https://i.leyoujia.com/lyjEtherpad/p/1ae1a8de-b263-4b89-95f7-82b204da2dbe?docId=21589248", "_blank", "noopener");
+      showToast("请填写本场候选人信息，完成后下载文档并作为附件随面试官通知发送", "ok");
       return;
     }
     if (action === "copy-template") {

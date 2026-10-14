@@ -430,6 +430,18 @@ table.grid-table {
 .chip.warn { background: var(--amber-soft); color: var(--amber); }
 .chip.ok { background: var(--green-soft); color: var(--green); }
 .chip.neutral { background: #eef1f4; color: var(--muted); }
+.chip-risk {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 3px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--amber-soft);
+  color: var(--amber);
+  font-size: 10px;
+  line-height: 1.5;
+  vertical-align: middle;
+}
 
 .status-pill {
   display: inline-flex;
@@ -2070,7 +2082,14 @@ window.SEED_DATA = {
   function nextHostFromCompleted(session, excludedIds = new Set(), excludeSessionId = null) {
     const pool = state.hosts;
     if (!pool.length) return null;
-    const latest = sortSessionsDesc(state.sessions.filter((s) => s.status === "已开展" && s.id !== excludeSessionId && (s.hostId || s.hostName)))[0];
+    const targetDate = session?.date || todayIso();
+    const targetTime = session?.time || "23:59";
+    const latest = sortSessionsDesc(state.sessions.filter((s) => {
+      if (s.status === "已取消" || s.id === excludeSessionId || !(s.hostId || s.hostName)) return false;
+      const beforeTarget = s.date < targetDate || (s.date === targetDate && (s.time || "") < targetTime);
+      if (!beforeTarget) return false;
+      return s.status === "已开展" || s.status === "待安排";
+    }))[0];
     const latestName = latest ? (hostDisplayName(latest) || latest.hostName || "") : "";
     const latestIndex = pool.findIndex((h) => h.id === latest?.hostId || h.name === latestName);
     const start = latestIndex >= 0 ? (latestIndex + 1) % pool.length : (state.cursors.hostIndex || 0) % pool.length;
@@ -2257,9 +2276,13 @@ window.SEED_DATA = {
       if (session.hostName) {
         const existingHost = state.hosts.find((h) => h.name === session.hostName);
         if (existingHost) session.hostId = existingHost.id;
-      } else if (!session.hostId) {
+      } else if (!session.hostId || !session.hostManual) {
         const host = pickRole("hosts", session, used);
-        if (host) session.hostId = host.id;
+        if (host) {
+          session.hostId = host.id;
+          session.hostName = "";
+          session.hostManual = false;
+        }
         else if (!session.hostId) warnings.push("主持人池无人可用，请补充主持人或调整不可用时间");
       }
     }
@@ -2449,6 +2472,7 @@ window.SEED_DATA = {
       if (x.hostName) x.hostName = hostRename[x.hostName] || x.hostName;
       x.interviewers = x.interviewers || [];
       x.meetingUrl = x.meetingUrl || "";
+      x.hostManual = x.hostManual === true;
       x.status = x.status || "待安排";
       x.notified = x.notified === true;
       x.formConfirmed = x.formConfirmed === true;
@@ -2691,7 +2715,7 @@ window.SEED_DATA = {
   }
 
   function personChips(session) {
-    const stats = computeStats();
+    const stats = computeStats(true);
     const items = (session.interviewers || []).slice().sort((a, b) => a.slot - b.slot);
     if (!items.length) return `<span class="chip missing">未排</span>`;
     return `<span class="chips">${items.map((iv) => {
@@ -2701,14 +2725,28 @@ window.SEED_DATA = {
       const name = person ? person.name : "未知";
       const short = dept ? dept.shortName : "?";
       const color = dept ? dept.color : "#64748b";
-      const consec = stats.consec[iv.personId] || 0;
+      const consec = completedConsecutiveBefore(iv.personId, session);
       const limit = person ? (person.maxConsecutive || 1) : 1;
-      const risk = consec > 1 && consec >= limit;
+      const risk = consec >= limit;
       const title = `${name} · ${dept ? dept.name : ""} · 累计${stats.total[iv.personId] || 0}场 · 连续${consec}场${risk ? "（建议换人）" : ""}`;
       const chipColor = risk ? "#b45309" : color;
       const chipBg = risk ? "#fdf0dd" : `${color}14`;
-      return `<span class="chip" style="border-color:${chipColor}22;background:${chipBg};color:${chipColor}" title="${esc(title)}"><span class="dot"></span>${esc(name)}${risk ? " 连" : ""}<span style="opacity:.72">${esc(short)}</span></span>`;
+      return `<span class="chip" style="border-color:${chipColor}22;background:${chipBg};color:${chipColor}" title="${esc(title)}"><span class="dot"></span>${esc(name)}<span style="opacity:.72">${esc(short)}</span>${risk ? '<span class="chip-risk">连排</span>' : ""}</span>`;
     }).join("")}</span>`;
+  }
+
+  function completedConsecutiveBefore(personId, session) {
+    const targetDate = session?.date || todayIso();
+    const targetTime = session?.time || "23:59";
+    const prior = sortSessions(state.sessions.filter((item) => {
+      if (item.status !== "已开展" || item.id === session?.id) return false;
+      return item.date < targetDate || (item.date === targetDate && (item.time || "") < targetTime);
+    }));
+    let run = 0;
+    for (const item of prior) {
+      run = (item.interviewers || []).some((iv) => iv.personId === personId) ? run + 1 : 0;
+    }
+    return run;
   }
 
   function hostDisplayName(session) {
@@ -3847,6 +3885,7 @@ window.SEED_DATA = {
       time: state.settings.defaultTime || "14:00-14:40",
       mode: state.settings.defaultMode || "腾讯会议",
       meetingUrl: "",
+      hostManual: false,
       candidates: "",
       status: "待安排",
       hostId: null,
@@ -4059,7 +4098,9 @@ window.SEED_DATA = {
     session.formConfirmed = $("#sesFormConfirmed")?.checked === true;
     session.ticketReady = $("#sesTicketReady")?.checked === true;
     session.locked = $("#sesLocked")?.checked === true;
-    session.hostId = $("#sesHost").value || null;
+    const selectedHostId = $("#sesHost").value || null;
+    if (selectedHostId !== session.hostId) session.hostManual = Boolean(selectedHostId);
+    session.hostId = selectedHostId;
     session.organizerId = $("#sesOrg")?.value || null;
     session.note = $("#sesNote").value;
     const interviewers = [];

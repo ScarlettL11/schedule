@@ -2068,28 +2068,9 @@ window.SEED_DATA = {
   }
 
   function rotationCursorsBeforeSession(session) {
-    const cursors = deepClone(state.cursors);
-    cursors.deptPassCounts = cursors.deptPassCounts || {};
-    const departments = orderedDepartments();
-    const heads = departments.filter((dept) => (dept.people || []).some((person) => person.enabled && person.role === "中心负责人"));
-    const assistants = departments.filter((dept) => (dept.people || []).some((person) => person.enabled && person.role === "助理"));
-    const peopleById = new Map([...departments.flatMap((dept) => dept.people || []), ...(state.archivedPeople || [])].map((person) => [person.id, person]));
-    for (const pending of pendingSessionsBefore(session)) {
-      for (const iv of (pending.interviewers || []).slice().sort((a, b) => a.slot - b.slot)) {
-        const dept = departments.find((item) => item.id === iv.deptId);
-        if (!dept) continue;
-        cursors.deptPassCounts[dept.id] = (cursors.deptPassCounts[dept.id] || 0) + 1;
-        const person = peopleById.get(iv.personId);
-        if (person?.role === "中心负责人" && heads.length) {
-          const index = heads.findIndex((item) => item.id === dept.id);
-          if (index >= 0) cursors.headIndex = (index + 1) % heads.length;
-        } else if (person?.role === "助理" && assistants.length) {
-          const index = assistants.findIndex((item) => item.id === dept.id);
-          if (index >= 0) cursors.assistantIndex = (index + 1) % assistants.length;
-        }
-      }
-    }
-    return cursors;
+    // Pending or unsaved sessions must not consume the interviewer rotation.
+    // state.cursors is rebuilt from completed sessions only.
+    return deepClone(state.cursors);
   }
 
   function pendingPersonAssignmentCountsBefore(session) {
@@ -2227,17 +2208,13 @@ window.SEED_DATA = {
     const assistantDepts = ordered.filter((d) => !excludedDeptSet.has(d.id) && canSupply(d, "assistant"));
     let headIdx = (state.cursors.headIndex || 0) % Math.max(1, headDepts.length);
     let assistantIdx = (state.cursors.assistantIndex || 0) % Math.max(1, assistantDepts.length);
-    const prioritizeDueDepartments = (departments, startIndex) => {
-      const rotated = departments.length
-        ? [...departments.slice(startIndex), ...departments.slice(0, startIndex)]
-        : [];
-      return rotated
+    const prioritizeDueDepartments = (departments) =>
+      departments
         .map((dept, index) => ({ dept, index, due: departmentDueForSession(dept, session) }))
         .sort((a, b) => Number(b.due) - Number(a.due) || a.index - b.index)
         .map((item) => item.dept);
-    };
-    const headQueue = prioritizeDueDepartments(headDepts, headIdx);
-    const assistantQueue = prioritizeDueDepartments(assistantDepts, assistantIdx);
+    const headQueue = prioritizeDueDepartments(headDepts);
+    const assistantQueue = prioritizeDueDepartments(assistantDepts);
     const selectedDeptIds = new Set(excludedDeptSet);
     const avoidPersons = new Set(excludedPersons);
     const selectedPersonIds = new Set(excludedPersons);

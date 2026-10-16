@@ -2259,7 +2259,7 @@ window.SEED_DATA = {
         if (!queue.length) break;
         const dept = queue[idx % queue.length];
         idx += 1;
-        if (selectedDeptIds.has(dept.id) && !(allowHeadFallback && headSelectedIds.has(dept.id))) continue;
+        if (selectedDeptIds.has(dept.id)) continue;
         if (!departmentDueForSession(dept, session)) continue;
         const person = pickPersonForDeptRole(dept, session, avoidPersons, role);
         if (person) {
@@ -4196,14 +4196,23 @@ window.SEED_DATA = {
         </div>
       </div>
     `);
+    refreshModalSlotPeople();
   }
 
   function refreshModalSlotPeople() {
     const modal = $("#modalRoot");
     if (!modal || !selectedSessionId) return;
-    $$(".slot-row", modal).forEach((row) => {
-      const slot = Number(row.querySelector(".slot-dept").dataset.slot);
-      const deptId = row.querySelector(".slot-dept").value;
+    const rows = $(".slot-row", modal);
+    rows.forEach((row) => {
+      const deptSelect = row.querySelector(".slot-dept");
+      const deptId = deptSelect.value;
+      Array.from(deptSelect.options).forEach((option) => {
+        if (!option.value) return;
+        const usedElsewhere = rows.some((other) =>
+          other !== row && other.querySelector(".slot-dept").value === option.value
+        );
+        option.disabled = usedElsewhere && option.value !== deptId;
+      });
       const personSel = row.querySelector(".slot-person");
       const dept = findDept(deptId);
       const current = personSel.value;
@@ -4264,6 +4273,11 @@ window.SEED_DATA = {
         locked: row.querySelector(".slot-lock").checked,
       });
     });
+    const assignedDeptIds = interviewers.map((iv) => iv.deptId).filter(Boolean);
+    if (new Set(assignedDeptIds).size !== assignedDeptIds.length) {
+      showToast("同一场次每个中心只能安排一位面试官，请调整重复中心后再保存", "warn");
+      return;
+    }
     session.interviewers = interviewers.filter((iv) => iv.deptId || iv.personId || iv.locked);
     if (isNew) state.sessions.push(session);
     closeModal();

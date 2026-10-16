@@ -2195,6 +2195,18 @@ window.SEED_DATA = {
     return candidates[0];
   }
 
+  function departmentDueForSession(dept, session) {
+    const frequency = Math.max(1, Math.floor(Number(dept.frequency) || 1));
+    if (frequency <= 1) return true;
+    const priorCompleted = sortSessions(state.sessions.filter((item) =>
+      item.status === "已开展" && item.id !== session?.id && sessionComesBefore(item, session)
+    ));
+    const recentCompleted = priorCompleted.slice(-(frequency - 1));
+    return !recentCompleted.some((item) =>
+      (item.interviewers || []).some((iv) => iv.deptId === dept.id)
+    );
+  }
+
   function selectDepartmentsForSession(session, count, excludedDeptIds, excludedPersonIds, advance, warnings) {
     const ordered = orderedDepartments();
     const deptIndexMap = new Map(ordered.map((d, i) => [d.id, i]));
@@ -2248,12 +2260,7 @@ window.SEED_DATA = {
         const dept = queue[idx % queue.length];
         idx += 1;
         if (selectedDeptIds.has(dept.id) && !(allowHeadFallback && headSelectedIds.has(dept.id))) continue;
-        const pass = state.cursors.deptPassCounts[dept.id] || 0;
-        const freq = Math.max(1, dept.frequency || 1);
-        if (pass % freq !== 0) {
-          if (advance) state.cursors.deptPassCounts[dept.id] = pass + 1;
-          continue;
-        }
+        if (!departmentDueForSession(dept, session)) continue;
         const person = pickPersonForDeptRole(dept, session, avoidPersons, role);
         if (person) {
           const consec = stats.consec[person.id] || 0;
@@ -2262,7 +2269,6 @@ window.SEED_DATA = {
             p.id !== person.id && personAvailable(p, session.date) && !avoidPersons.has(p.id) && roleType(p) === role
           );
           if (consec >= limit && !hasAlternative) {
-            if (advance) state.cursors.deptPassCounts[dept.id] = pass + 1;
             if (warnings) warnings.push(`${person.name}（${dept.shortName}）已连续参与，本轮先跳过`);
             continue;
           }
@@ -2271,9 +2277,7 @@ window.SEED_DATA = {
           avoidPersons.add(person.id);
           selectedPersonIds.add(person.id);
           if (role === "head") headSelectedIds.add(dept.id);
-          if (advance) state.cursors.deptPassCounts[dept.id] = pass + 1;
         } else {
-          if (advance) state.cursors.deptPassCounts[dept.id] = pass + 1;
           if (warnings && !allowHeadFallback) warnings.push(`${dept.shortName || dept.name}当前没有可用的${role === "head" ? "中心负责人" : "助理"}，本轮顺延`);
         }
       }

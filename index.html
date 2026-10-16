@@ -2761,16 +2761,19 @@ window.SEED_DATA = {
   }
 
   function reopenSessionModalPreservingScroll(sessionId, previousBackdrop) {
-    const scrollTop = previousBackdrop?.scrollTop || 0;
+    const scrollTop = previousBackdrop ? previousBackdrop.scrollTop : 0;
     const pageScrollY = window.scrollY;
+    const pageScrollX = window.scrollX;
     openSessionModal(sessionId);
-    const backdrop = $("#modalRoot .modal-backdrop");
-    if (backdrop) backdrop.scrollTop = scrollTop;
-    window.scrollTo(0, pageScrollY);
+    const restoreScroll = () => {
+      const backdrop = $("#modalRoot .modal-backdrop");
+      if (backdrop) backdrop.scrollTop = scrollTop;
+      window.scrollTo({ top: pageScrollY, left: pageScrollX, behavior: "instant" });
+    };
+    restoreScroll();
     requestAnimationFrame(() => {
-      const refreshedBackdrop = $("#modalRoot .modal-backdrop");
-      if (refreshedBackdrop) refreshedBackdrop.scrollTop = scrollTop;
-      window.scrollTo(0, pageScrollY);
+      restoreScroll();
+      requestAnimationFrame(restoreScroll);
     });
   }
 

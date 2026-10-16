@@ -2197,8 +2197,10 @@ window.SEED_DATA = {
 
   function departmentDueForSession(dept, session) {
     if (dept.id === "gaojixiao") {
-      const dayOfMonth = Number(String(session?.date || "").slice(-2));
-      return dayOfMonth >= 16;
+      const dateParts = String(session?.date || "").split("-").map(Number);
+      const month = dateParts[1] || 0;
+      const dayOfMonth = dateParts[2] || 0;
+      if (month === 7) return dayOfMonth >= 16;
     }
     const frequency = Math.max(1, Math.floor(Number(dept.frequency) || 1));
     if (frequency <= 1) return true;

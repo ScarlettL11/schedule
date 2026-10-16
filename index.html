@@ -2221,6 +2221,17 @@ window.SEED_DATA = {
     const assistantDepts = ordered.filter((d) => !excludedDeptSet.has(d.id) && canSupply(d, "assistant"));
     let headIdx = (state.cursors.headIndex || 0) % Math.max(1, headDepts.length);
     let assistantIdx = (state.cursors.assistantIndex || 0) % Math.max(1, assistantDepts.length);
+    const prioritizeDueDepartments = (departments, startIndex) => {
+      const rotated = departments.length
+        ? [...departments.slice(startIndex), ...departments.slice(0, startIndex)]
+        : [];
+      return rotated
+        .map((dept, index) => ({ dept, index, due: departmentDueForSession(dept, session) }))
+        .sort((a, b) => Number(b.due) - Number(a.due) || a.index - b.index)
+        .map((item) => item.dept);
+    };
+    const headQueue = prioritizeDueDepartments(headDepts, headIdx);
+    const assistantQueue = prioritizeDueDepartments(assistantDepts, assistantIdx);
     const selectedDeptIds = new Set(excludedDeptSet);
     const avoidPersons = new Set(excludedPersons);
     const selectedPersonIds = new Set(excludedPersons);
@@ -2260,7 +2271,6 @@ window.SEED_DATA = {
         const dept = queue[idx % queue.length];
         idx += 1;
         if (selectedDeptIds.has(dept.id)) continue;
-        if (!departmentDueForSession(dept, session)) continue;
         const person = pickPersonForDeptRole(dept, session, avoidPersons, role);
         if (person) {
           const consec = stats.consec[person.id] || 0;
@@ -2284,16 +2294,16 @@ window.SEED_DATA = {
       return { picked, nextIndex: idx };
     }
 
-    const headResult = pickFromQueue(headDepts, headIdx, "head", headQuota - headsUsed);
-    const assistantResult = pickFromQueue(assistantDepts, assistantIdx, "assistant", assistantQuota - assistantsUsed);
+    const headResult = pickFromQueue(headQueue, 0, "head", headQuota - headsUsed);
+    const assistantResult = pickFromQueue(assistantQueue, 0, "assistant", assistantQuota - assistantsUsed);
     if (assistantResult.picked.length < assistantQuota - assistantsUsed) {
       const missing = assistantQuota - assistantsUsed - assistantResult.picked.length;
-      const fallback = pickFromQueue(assistantDepts, assistantResult.nextIndex, "assistant", missing, true);
+      const fallback = pickFromQueue(assistantQueue, assistantResult.nextIndex, "assistant", missing, true);
       assistantResult.picked.push(...fallback.picked);
       assistantResult.nextIndex = fallback.nextIndex;
     }
-    state.cursors.headIndex = headResult.nextIndex;
-    state.cursors.assistantIndex = assistantResult.nextIndex;
+    state.cursors.headIndex = (headIdx + headResult.nextIndex) % Math.max(1, headDepts.length);
+    state.cursors.assistantIndex = (assistantIdx + assistantResult.nextIndex) % Math.max(1, assistantDepts.length);
     selected.push(...headResult.picked, ...assistantResult.picked);
     if (warnings) {
       if (headsUsed + headResult.picked.length < headQuota) warnings.push(`还差 ${headQuota - headsUsed - headResult.picked.length} 位中心负责人`);

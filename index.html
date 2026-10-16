@@ -4205,7 +4205,7 @@ window.SEED_DATA = {
   function refreshModalSlotPeople() {
     const modal = $("#modalRoot");
     if (!modal || !selectedSessionId) return;
-    const rows = $(".slot-row", modal);
+    const rows = $$(".slot-row", modal);
     rows.forEach((row) => {
       const deptSelect = row.querySelector(".slot-dept");
       const deptId = deptSelect.value;

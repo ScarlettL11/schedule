@@ -1813,6 +1813,21 @@ window.SEED_DATA = {
     return (state.archivedPeople || []).find((p) => p.id === id) || null;
   }
 
+  function assignedPersonName(interviewer) {
+    const person = findPerson(interviewer?.personId);
+    return person?.name || interviewer?.personNameSnapshot || legacyPersonName(interviewer?.personId) || "未知";
+  }
+
+  function legacyPersonName(personId) {
+    const value = String(personId || "");
+    return value.startsWith("unknown_") ? value.slice("unknown_".length) : "";
+  }
+
+  function assignedDepartmentName(interviewer) {
+    const dept = findDept(interviewer?.deptId);
+    return interviewer?.deptNameSnapshot || dept?.name || (typeof interviewer?.deptId === "string" && !findDept(interviewer.deptId) ? interviewer.deptId : "未知中心");
+  }
+
   function findHost(id) {
     return state.hosts.find((h) => h.id === id) || null;
   }
@@ -2549,18 +2564,48 @@ window.SEED_DATA = {
       }
       return x;
     });
-    // Retain names for old assignments whose people were removed before archiving existed.
-    const activePeopleIds = new Set(s.departments.flatMap((d) => d.people.map((p) => p.id)));
-    const archivedPeopleIds = new Set(s.archivedPeople.map((p) => p.id));
+    // Person IDs are the identity key. Snapshot the assignment details and repair
+    // legacy aliases created when a transferred person was removed and re-added.
+    const activePeople = s.departments.flatMap((d) => d.people);
+    const activeByName = new Map();
+    for (const person of activePeople) {
+      const matches = activeByName.get(person.name) || [];
+      matches.push(person);
+      activeByName.set(person.name, matches);
+    }
+    const personAliases = new Map();
+    for (const archived of s.archivedPeople) {
+      const matches = activeByName.get(archived.name) || [];
+      if (matches.length === 1 && archived.id !== matches[0].id) personAliases.set(archived.id, matches[0].id);
+    }
     const legacyPeopleById = new Map((window.SEED_DATA?.departments || []).flatMap((d) => d.people || []).map((p) => [p.id, p]));
     for (const session of s.sessions) {
       for (const interviewer of session.interviewers || []) {
-        const personId = interviewer.personId;
-        if (!personId || activePeopleIds.has(personId) || archivedPeopleIds.has(personId)) continue;
-        const legacyPerson = legacyPeopleById.get(personId);
-        if (!legacyPerson) continue;
-        s.archivedPeople.push({ ...deepClone(legacyPerson), enabled: false, archived: true });
-        archivedPeopleIds.add(personId);
+        const oldId = interviewer.personId;
+        if (!oldId) continue;
+        if (personAliases.has(oldId)) interviewer.personId = personAliases.get(oldId);
+        let person = activePeople.find((item) => item.id === interviewer.personId) || s.archivedPeople.find((item) => item.id === interviewer.personId) || null;
+        const oldName = legacyPersonName(oldId);
+        if (!person && oldName) {
+          const matches = activeByName.get(oldName) || [];
+          if (matches.length === 1) {
+            interviewer.personId = matches[0].id;
+            person = matches[0];
+          }
+        }
+        if (!person && !oldName) {
+          const legacyPerson = legacyPeopleById.get(oldId);
+          if (legacyPerson) {
+            s.archivedPeople.push({ ...deepClone(legacyPerson), enabled: false, archived: true });
+            person = legacyPerson;
+          }
+        }
+        const dept = s.departments.find((item) => item.id === interviewer.deptId);
+        const originalDeptName = typeof interviewer.deptId === "string" && !dept ? interviewer.deptId : dept?.name;
+        if (!interviewer.personNameSnapshot && person?.name) interviewer.personNameSnapshot = person.name;
+        if (!interviewer.personNameSnapshot && oldName) interviewer.personNameSnapshot = oldName;
+        if (!interviewer.deptNameSnapshot && originalDeptName) interviewer.deptNameSnapshot = originalDeptName;
+        if (!interviewer.roleSnapshot && person?.role) interviewer.roleSnapshot = person.role;
       }
     }
     rebuildRotationCursors(s);
@@ -2805,13 +2850,14 @@ window.SEED_DATA = {
       if (!iv.personId) return `<span class="chip missing">缺员</span>`;
       const dept = findDept(iv.deptId);
       const person = findPerson(iv.personId);
-      const name = person ? person.name : "未知";
-      const short = dept ? dept.shortName : "?";
+      const name = assignedPersonName(iv);
+      const deptName = assignedDepartmentName(iv);
+      const short = dept?.shortName || deptName;
       const color = dept ? dept.color : "#64748b";
       const consec = completedConsecutiveBefore(iv.personId, session);
       const limit = person ? (person.maxConsecutive || 1) : 1;
       const risk = consec >= limit;
-      const title = `${name} · ${dept ? dept.name : ""} · 累计${stats.total[iv.personId] || 0}场 · 连续${consec}场${risk ? "（建议换人）" : ""}`;
+      const title = `${name} · ${deptName} · 累计${stats.total[iv.personId] || 0}场 · 连续${consec}场${risk ? "（建议换人）" : ""}`;
       return `<span class="chip" style="border-color:${color}22;background:${color}14;color:${color}" title="${esc(title)}"><span class="dot"></span>${esc(name)}<span style="opacity:.72">${esc(short)}</span></span>`;
     }).join("")}</span>`;
   }
@@ -3055,9 +3101,9 @@ window.SEED_DATA = {
     const rawCandidates = (session.candidates || "待定").split("\n").map((line) => line.trim()).filter(Boolean);
     const candidates = rawCandidates.length ? rawCandidates : ["待定"];
     const interviewers = (session.interviewers || []).slice().sort((a, b) => a.slot - b.slot).filter((iv) => iv.personId).map((iv) => {
-      const person = findPerson(iv.personId);
       const dept = findDept(iv.deptId);
-      return { name: person ? person.name : "未知", dept: dept ? (dept.shortName || dept.name) : "未知中心", color: dept?.color || "#64748b" };
+      const deptName = assignedDepartmentName(iv);
+      return { name: assignedPersonName(iv), dept: dept?.shortName || deptName, color: dept?.color || "#64748b" };
     });
     const measure = document.createElement("canvas").getContext("2d");
     const textLines = (value, maxWidth, fontSize, weight = 500) => {
@@ -3475,8 +3521,7 @@ window.SEED_DATA = {
       if (!q) return true;
       return `${s.date} ${s.time} ${s.candidates} ${s.note}`.toLowerCase().includes(q) ||
         (s.interviewers || []).some((iv) => {
-          const p = findPerson(iv.personId);
-          return p && p.name.toLowerCase().includes(q);
+          return assignedPersonName(iv).toLowerCase().includes(q);
         });
     }));
     const filters = ["全部", "待确认", "待通知", "已确认", "已完成", "异常"];
@@ -3497,7 +3542,7 @@ window.SEED_DATA = {
                   <div class="cal-session ${progress.tone}" data-action="edit-session" data-id="${esc(s.id)}" title="点击查看详情">
                     <div class="cal-time">${s.locked ? "🔒 " : ""}${esc(s.time)}</div>
                     <div class="cal-name">${esc(candidateShortName(s))}</div>
-                    <div class="cal-interviewers">${(s.interviewers || []).filter((iv) => iv.personId).map((iv) => esc((findPerson(iv.personId) || {}).name || "")).join("、") || "未排"}</div>
+                    <div class="cal-interviewers">${(s.interviewers || []).filter((iv) => iv.personId).map((iv) => esc(assignedPersonName(iv))).join("、") || "未排"}</div>
                     <div>${progressPill(progress)}</div>
                   </div>
                 `;
@@ -4278,6 +4323,9 @@ window.SEED_DATA = {
         slot,
         deptId: row.querySelector(".slot-dept").value || null,
         personId: row.querySelector(".slot-person").value || null,
+        personNameSnapshot: findPerson(row.querySelector(".slot-person").value)?.name || "",
+        deptNameSnapshot: findDept(row.querySelector(".slot-dept").value)?.name || "",
+        roleSnapshot: findPerson(row.querySelector(".slot-person").value)?.role || "",
         locked: row.querySelector(".slot-lock").checked,
       });
     });
@@ -4337,8 +4385,8 @@ window.SEED_DATA = {
       const ivs = (s.interviewers || []).slice().sort((a, b) => a.slot - b.slot);
       for (let i = 0; i < maxSlots; i += 1) {
         const iv = ivs[i];
-        row.push(iv && iv.personId ? (findPerson(iv.personId)?.name || "") : "");
-        row.push(iv && iv.deptId ? (findDept(iv.deptId)?.name || "") : "");
+        row.push(iv && iv.personId ? assignedPersonName(iv) : "");
+        row.push(iv && iv.deptId ? assignedDepartmentName(iv) : "");
       }
       row.push(s.note || "");
       sessionRows.push(row);
@@ -4360,8 +4408,8 @@ window.SEED_DATA = {
     const head = ["日期", "时间", "开展模式", "竞聘人员", "状态", "主持人", "组织实施人", "面试官", "部门", "备注"];
     const rows = [head];
     for (const s of sortSessions(state.sessions)) {
-      const names = (s.interviewers || []).slice().sort((a, b) => a.slot - b.slot).map((iv) => iv.personId ? (findPerson(iv.personId)?.name || "") : "").join("、");
-      const depts = (s.interviewers || []).slice().sort((a, b) => a.slot - b.slot).map((iv) => iv.deptId ? (findDept(iv.deptId)?.name || "") : "").join("、");
+      const names = (s.interviewers || []).slice().sort((a, b) => a.slot - b.slot).map((iv) => iv.personId ? assignedPersonName(iv) : "").join("、");
+      const depts = (s.interviewers || []).slice().sort((a, b) => a.slot - b.slot).map((iv) => iv.deptId ? assignedDepartmentName(iv) : "").join("、");
       rows.push([s.date, s.time, s.mode, s.candidates, s.status, s.hostName || findHost(s.hostId)?.name || "", findOrganizer(s.organizerId)?.name || "", names, depts, s.note]);
     }
     const csv = "\uFEFF" + rows.map((r) => r.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
@@ -4646,7 +4694,11 @@ window.SEED_DATA = {
     for (const session of state.sessions) {
       if ((session.date || "") < today || session.status === "已开展" || session.status === "已取消") continue;
       for (const interviewer of session.interviewers || []) {
-        if (interviewer.personId === personId) interviewer.deptId = target.id;
+        if (interviewer.personId === personId) {
+          interviewer.deptId = target.id;
+          interviewer.personNameSnapshot = person.name;
+          interviewer.deptNameSnapshot = target.name;
+        }
       }
     }
     saveAndRender();
@@ -5388,9 +5440,10 @@ window.SEED_DATA = {
       state = normalizeState(row.data);
       serverMode = true;
       localEditsWhileDisconnected = false;
+      const identityMigrationNeeded = JSON.stringify(row.data) !== JSON.stringify(state);
       const elapsedSessionsUpdated = markPassedSessions();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      if (elapsedSessionsUpdated) saveStateNow();
+      if (elapsedSessionsUpdated || identityMigrationNeeded) saveStateNow();
       renderCurrentView();
       setSupabaseStatus("云端同步正常 · 自动更新", "var(--green)");
     } catch (err) {
@@ -5426,10 +5479,11 @@ window.SEED_DATA = {
       serverMode = true;
       if (JSON.stringify(remote) !== JSON.stringify(state)) {
         state = normalizeState(remote);
+        const identityMigrationNeeded = JSON.stringify(remote) !== JSON.stringify(state);
         const elapsedSessionsUpdated = markPassedSessions();
         syncOpenDepts();
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        if (elapsedSessionsUpdated) saveStateNow();
+        if (elapsedSessionsUpdated || identityMigrationNeeded) saveStateNow();
         renderCurrentView();
       }
       supabaseLastError = "";

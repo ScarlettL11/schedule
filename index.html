@@ -2196,6 +2196,10 @@ window.SEED_DATA = {
   }
 
   function departmentDueForSession(dept, session) {
+    if (dept.id === "gaojixiao") {
+      const dayOfMonth = Number(String(session?.date || "").slice(-2));
+      return dayOfMonth >= 16;
+    }
     const frequency = Math.max(1, Math.floor(Number(dept.frequency) || 1));
     if (frequency <= 1) return true;
     const priorCompleted = sortSessions(state.sessions.filter((item) =>
@@ -2241,10 +2245,21 @@ window.SEED_DATA = {
     const jicaiDept = ordered.find((d) => d.id === "jicai" && !excludedDeptSet.has(d.id));
     if (jicaiDept) {
       let forcedRole = null;
-      if (headsUsed < headQuota && canSupply(jicaiDept, "head")) forcedRole = "head";
-      else if (assistantsUsed < assistantQuota && canSupply(jicaiDept, "assistant")) forcedRole = "assistant";
+      let forcedPerson = null;
+      const isOfflineSession = /线下|现场|会议室/.test(session.mode || "");
+      const onlineFinanceInterviewer = !isOfflineSession && jicaiDept.people.find((p) =>
+        p.name === "李小君" && personAvailable(p, session.date) && !avoidPersons.has(p.id)
+      );
+      if (onlineFinanceInterviewer && assistantsUsed < assistantQuota) {
+        forcedPerson = onlineFinanceInterviewer;
+        forcedRole = roleType(onlineFinanceInterviewer);
+      } else if (headsUsed < headQuota && canSupply(jicaiDept, "head")) {
+        forcedRole = "head";
+      } else if (assistantsUsed < assistantQuota && canSupply(jicaiDept, "assistant")) {
+        forcedRole = "assistant";
+      }
       if (forcedRole) {
-        const forcedPerson = pickPersonForDeptRole(jicaiDept, session, avoidPersons, forcedRole);
+        forcedPerson = forcedPerson || pickPersonForDeptRole(jicaiDept, session, avoidPersons, forcedRole);
         if (forcedPerson) {
           selected.push({ dept: jicaiDept, person: forcedPerson, orderIndex: deptIndexMap.get(jicaiDept.id) });
           selectedDeptIds.add(jicaiDept.id);
@@ -2271,6 +2286,7 @@ window.SEED_DATA = {
         const dept = queue[idx % queue.length];
         idx += 1;
         if (selectedDeptIds.has(dept.id)) continue;
+        if (dept.id === "gaojixiao" && !departmentDueForSession(dept, session)) continue;
         const person = pickPersonForDeptRole(dept, session, avoidPersons, role);
         if (person) {
           const consec = stats.consec[person.id] || 0;
